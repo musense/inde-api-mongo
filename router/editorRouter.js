@@ -4,7 +4,6 @@ const Editor = require("../model/editor");
 const Sitemap = require("../model/sitemap");
 const Categories = require("../model/categories");
 const Tags = require("../model/tags");
-const html2json = require("html2json").html2json;
 const multer = require("multer");
 const sharp = require("sharp");
 const fs = require("fs");
