@@ -79,7 +79,7 @@ app.use(function (req, res, next) {
   next();
 });
 
-pp.use(sitemapRouter);
+app.use(sitemapRouter);
 app.use(categoryRouter);
 app.use(userRouter);
 app.use(editorRouter);
