@@ -684,7 +684,7 @@ async function processImage(file, originalFilename) {
     if (file.fieldname === "homeImagePath") {
       fs.writeFileSync(
         // `C:/Users/user/Desktop/seo-IND-dev/SIT-code/uploadtest/homepage/${newFilename}`,
-        `/home/saved_image/homepage/${newFilename}`,
+        `http://uat-apidb.zoonobet.com/home/saved_image/homepage/${newFilename}`,
         compressedImage2.data
       );
       return newFilename;
@@ -692,12 +692,12 @@ async function processImage(file, originalFilename) {
       // save compressed image to disk
       fs.writeFileSync(
         // `C:/Users/user/Desktop/seo-IND-dev/SIT-code/uploadtest/content/${newFilename}`,
-        `/home/saved_image/content/${newFilename}`,
+        `http://uat-apidb.zoonobet.com/home/saved_image/content/${newFilename}`,
         compressedImage.data
       );
       fs.writeFileSync(
         // `C:/Users/user/Desktop/seo-IND-dev/SIT-code/uploadtest/homepage/${newFilename}`,
-        `/home/saved_image/homepage/${newFilename}`,
+        `http://uat-apidb.zoonobet.com/home/saved_image/homepage/${newFilename}`,
         compressedImage2.data
       );
       return newFilename;
@@ -1754,11 +1754,11 @@ editorRouter.patch(
         res.editor.homeImagePath = homeFilename;
       }
     } else if (contentImagePath && contentFilename) {
-      res.editor.homeImagePath = `/home/saved_image/homepage/${contentFilename}`;
+      res.editor.homeImagePath = `http://uat-apidb.zoonobet.com/home/saved_image/homepage/${contentFilename}`;
     }
 
     if (contentImagePath && contentFilename) {
-      res.editor.contentImagePath = `/home/saved_image/content/${contentFilename}`;
+      res.editor.contentImagePath = `http://uat-apidb.zoonobet.com/home/saved_image/content/${contentFilename}`;
     }
     // if (homeImagePath) {
     //   res.editor.homeImagePath = homeFilename;
@@ -1895,8 +1895,8 @@ editorRouter.post(
           editorData.homeImagePath = homeFilename;
           editorData.contentImagePath = contentFilename;
         } else {
-          editorData.homeImagePath = `/home/saved_image/homepage/${contentFilename}`;
-          editorData.contentImagePath = `/home/saved_image/content/${contentFilename}`;
+          editorData.homeImagePath = `http://uat-apidb.zoonobet.com/home/saved_image/homepage/${contentFilename}`;
+          editorData.contentImagePath = `http://uat-apidb.zoonobet.com/home/saved_image/content/${contentFilename}`;
         }
 
         const newEditor = new Editor(editorData);
