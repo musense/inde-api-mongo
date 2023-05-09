@@ -133,6 +133,7 @@ async function getSpecificClassifications(id, limit, pageNumber) {
 
   const editors = await Editor.find({
     categories: id,
+    hidden: false,
   })
     .select(
       "serialNumber title categories tags homeImagePath contentImagePath createdAt"
