@@ -3,6 +3,8 @@ const cors = require("cors");
 const tagRouter = require("./router/tagRouter");
 const editorRouter = require("./router/editorRouter");
 const userRouter = require("./router/userRouter");
+const sitemapRouter = require("./router/sitemapRouter");
+const categoryRouter = require("./router/categoryRouter");
 require("dotenv").config();
 require("./mongoose");
 const session = require("express-session");
