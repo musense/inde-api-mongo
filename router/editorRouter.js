@@ -684,7 +684,7 @@ async function processImage(file, originalFilename) {
     if (file.fieldname === "homeImagePath") {
       fs.writeFileSync(
         // `C:/Users/user/Desktop/seo-IND-dev/SIT-code/uploadtest/homepage/${newFilename}`,
-        `http://uat-apidb.zoonobet.com/home/saved_image/homepage/${newFilename}`,
+        `/home/saved_image/homepage/${newFilename}`,
         compressedImage2.data
       );
       return newFilename;
@@ -692,12 +692,12 @@ async function processImage(file, originalFilename) {
       // save compressed image to disk
       fs.writeFileSync(
         // `C:/Users/user/Desktop/seo-IND-dev/SIT-code/uploadtest/content/${newFilename}`,
-        `http://uat-apidb.zoonobet.com/home/saved_image/content/${newFilename}`,
+        `/home/saved_image/content/${newFilename}`,
         compressedImage.data
       );
       fs.writeFileSync(
         // `C:/Users/user/Desktop/seo-IND-dev/SIT-code/uploadtest/homepage/${newFilename}`,
-        `http://uat-apidb.zoonobet.com/home/saved_image/homepage/${newFilename}`,
+        `/home/saved_image/homepage/${newFilename}`,
         compressedImage2.data
       );
       return newFilename;
