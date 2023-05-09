@@ -1,5 +1,5 @@
 const express = require("express");
-const { json2html } = require("html2json");
+// const { json2html } = require("html2json");
 const Editor = require("../model/editor");
 const Sitemap = require("../model/sitemap");
 const Categories = require("../model/categories");
