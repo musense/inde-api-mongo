@@ -57,9 +57,9 @@ app.use(
       // maxAge: new Date(253402300000000), // Approximately Friday, 31 Dec 9999 23:59:59 GMT
       httpOnly: true,
       domain: ".zoonobet.com",
-      expires: 1800000,
+      expires: 28800000,
     },
-    maxAge: 1800000, // Approximately Friday, 31 Dec 9999 23:59:59 GMT
+    maxAge: 28800000, // Approximately Friday, 31 Dec 9999 23:59:59 GMT
     saveUninitialized: false,
     resave: false, //avoid server race condition
     // store: MongoStore.create({ mongoUrl: process.env.CON_STR }),
