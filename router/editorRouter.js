@@ -577,6 +577,7 @@ function uploadImage() {
     storage: storage,
     limits: {
       fileSize: 10000000, //maximim size 10MB
+      fieldSize: 10 * 1024 * 1024,
     },
     // fileFilter: function (req, file, cb) {
     //   // Check the file type and only allow image files to be uploaded.
