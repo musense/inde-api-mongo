@@ -214,32 +214,32 @@ async function parseCategories(req, res, next) {
     const categoriesMap = new Map();
 
     for (const category of categories) {
-      if (category.__isNew__ === true) {
-        const newCategory = new Categories({ name: category.label });
-        await newCategory.save();
-        categoriesMap.set(category.label, newCategory._id);
+      // if (category.__isNew__ === true) {
+      //   const newCategory = new Categories({ name: category.label });
+      //   await newCategory.save();
+      //   categoriesMap.set(category.label, newCategory._id);
 
-        const newCategoryUrl = `${domain}c_${newCategory._id}.html`;
+      //   const newCategoryUrl = `${domain}c_${newCategory._id}.html`;
 
-        const newCategorySitemap = new Sitemap({
-          url: newCategoryUrl,
-          originalID: newCategory._id,
-          type: "category",
+      //   const newCategorySitemap = new Sitemap({
+      //     url: newCategoryUrl,
+      //     originalID: newCategory._id,
+      //     type: "category",
+      //   });
+      //   await newCategorySitemap.save();
+      // } else {
+      if (!categoriesMap.has(category.label)) {
+        const existingCategory = await Categories.findOne({
+          name: category.label,
         });
-        await newCategorySitemap.save();
-      } else {
-        if (!categoriesMap.has(category.label)) {
-          const existingCategory = await Categories.findOne({
-            name: category.label,
-          });
 
-          if (existingCategory) {
-            categoriesMap.set(category.label, existingCategory._id);
-          } else {
-            throw new Error("Category name error");
-          }
+        if (existingCategory) {
+          categoriesMap.set(category.label, existingCategory._id);
+        } else {
+          throw new Error("Category name error");
         }
       }
+      // }
     }
     const categoriesArray = categories.map((category) =>
       categoriesMap.get(category.label)
@@ -325,7 +325,7 @@ async function parseTags(req, res, next) {
 function parseHTML(req, res, next) {
   const contentJsonString = req.body.content;
   if (req.method === "PATCH" && !contentJsonString) {
-    res.content = null;
+    res.content = undefined;
     next();
     return;
   }
