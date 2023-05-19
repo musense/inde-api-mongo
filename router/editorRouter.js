@@ -4,13 +4,15 @@ const Editor = require("../model/editor");
 const Sitemap = require("../model/sitemap");
 const Categories = require("../model/categories");
 const Tags = require("../model/tags");
+const tempEditor = require("../model/tempEditor");
 const multer = require("multer");
 const sharp = require("sharp");
 const fs = require("fs");
 const slugify = require("slugify");
 const escapeHtml = require("escape-html");
 const { Text } = require("slate");
-const { addAbortSignal } = require("stream");
+const path = require("path");
+const url = require("url");
 require("dotenv").config();
 
 const editorRouter = new express.Router();
@@ -23,6 +25,7 @@ const editorRouter = new express.Router();
 //     }, 0 * 1000)
 // })
 const domain = process.env.DOMAIN;
+const LOCAL_DOMAIN = process.env.LOCAL_DOMAIN;
 //set session verify
 const verifyUser = (req, res, next) => {
   if (req.session.isVerified) {
@@ -364,6 +367,10 @@ function parseHTML(req, res, next) {
         return `<h2 style="text-align: ${
           node.align || "initial"
         };">${children}</h2>`;
+      case "h3":
+        return `<h3 style="text-align: ${
+          node.align || "initial"
+        };">${children}</h3>`;
       case "list-item":
         return `<li>${children}</li>`;
       case "numbered-list":
@@ -708,6 +715,29 @@ async function processImage(file, originalFilename) {
   }
 }
 
+function copyFileAndGenerateNewUrl(originalUrl) {
+  // 從URL中獲取檔案路徑和檔名
+  const parsedUrl = url.parse(originalUrl);
+  const originalFilePath = parsedUrl.path;
+
+  // 產生新的檔名和路徑
+  const newFileName = `temp-file-${Date.now()}.jpg`; // 使用當前的時間戳生成唯一的新檔名
+  const newFilePath = path.join(path.dirname(originalFilePath), newFileName);
+
+  // 複製檔案
+  fs.copyFile(originalFilePath, newFilePath, (err) => {
+    if (err) throw err;
+  });
+
+  // 產生新的URL
+  const newUrl = new URL(
+    newFilePath,
+    `${parsedUrl.protocol}//${parsedUrl.host}`
+  ).toString();
+
+  return newUrl;
+}
+
 //後台編輯文章處顯示用
 editorRouter.get("/editor", parseQuery, async (req, res) => {
   try {
@@ -838,7 +868,7 @@ editorRouter.get("/editor", parseQuery, async (req, res) => {
       currentPage: pageNumber,
     };
 
-    res.send(result);
+    res.status(200).send(result);
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
@@ -975,7 +1005,7 @@ editorRouter.get(
         currentPage: pageNumber,
       };
 
-      res.send(result);
+      res.status(200).send(result);
     } catch (err) {
       res.status(500).send({ message: err.message });
     }
@@ -1484,7 +1514,7 @@ editorRouter.get("/editor/searchUntop/:name", parseQuery, async (req, res) => {
       currentPage: pageNumber,
     };
 
-    res.send(result);
+    res.status(200).send(result);
   } catch (err) {
     console.error(err);
     res.status(500).send({ message: err.message });
@@ -1496,7 +1526,7 @@ editorRouter.get("/editor/title", async (req, res) => {
   try {
     const editor = await Editor.find().select("title updatedAt");
     // .limit(10)
-    res.send(editor);
+    res.status(200).send(editor);
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
@@ -1547,9 +1577,36 @@ editorRouter.get("/editor/relatedArticles/:id", async (req, res) => {
 //使用 _id尋找特定文章
 editorRouter.get("/editor/:id", getEditor, async (req, res, next) => {
   try {
-    res.send(res.editor);
+    res.status(200).send(res.editor);
   } catch (err) {
     res.status(500).send({ message: err.message });
+  }
+});
+
+editorRouter.get("/tempEditor/:id", async (req, res, next) => {
+  const id = req.params.id;
+
+  let editor;
+  try {
+    editor = await tempEditor
+      .findOne({ _id: id })
+      .populate({ path: "categories", select: "name" })
+      .populate({ path: "tags", select: "name" });
+    if (editor == undefined) {
+      return res.status(404).json({ message: "can't find editor!" });
+    }
+    res.status(200).send(editor);
+  } catch (err) {
+    return res.status(500).send({ message: err.message });
+  }
+});
+
+editorRouter.get("/domainInfo", async (req, res, next) => {
+  try {
+    const result = { domain: domain };
+    res.status(200).send({ data: result });
+  } catch (err) {
+    return res.status(500).send({ message: err.message });
   }
 });
 
@@ -1597,7 +1654,7 @@ editorRouter.patch(
         { new: true }
       );
 
-      res.status(200).json({
+      res.status(201).json({
         message: "Page view count incremented",
         articleTitle: article.title,
       });
@@ -1620,7 +1677,7 @@ editorRouter.patch(
       );
 
       // 回傳更新筆數
-      res.json({
+      res.status(201).json({
         totalUpdate: result.modifiedCount,
         matchedCount: result.matchedCount,
       });
@@ -1660,7 +1717,9 @@ editorRouter.patch(
           updateCount++;
         }
       }
-      res.send({ updateCount: updateCount, failedCount: failedCount });
+      res
+        .status(201)
+        .send({ updateCount: updateCount, failedCount: failedCount });
     } catch (err) {
       res.status(500).send({ message: err.message });
     }
@@ -1696,7 +1755,9 @@ editorRouter.patch(
           updateCount++;
         }
       }
-      res.send({ updateCount: updateCount, failedCount: failedCount });
+      res
+        .status(201)
+        .send({ updateCount: updateCount, failedCount: failedCount });
     } catch (err) {
       res.status(500).send({ message: err.message });
     }
@@ -1745,23 +1806,33 @@ editorRouter.patch(
 
     const contentFilename = contentImagePath
       ? await processImage(contentImagePath, contentImagePath.originalname)
-      : null;
+      : undefined;
 
     const homeFilename = homeImagePath
       ? await processImage(homeImagePath, homeImagePath.originalname)
-      : null;
+      : undefined;
 
-    if (homeImagePath) {
-      if (homeFilename) {
+    if (contentFilename !== undefined) {
+      if (homeImagePath) {
         res.editor.homeImagePath = homeFilename;
+        res.editor.contentImagePath = contentFilename;
+      } else {
+        res.editor.homeImagePath = `${LOCAL_DOMAIN}home/saved_image/homepage/${contentFilename}`;
+        res.editor.contentImagePath = `${LOCAL_DOMAIN}home/saved_image/content/${contentFilename}`;
       }
-    } else if (contentImagePath && contentFilename) {
-      res.editor.homeImagePath = `http://uat-apidb.zoonobet.com/home/saved_image/homepage/${contentFilename}`;
     }
 
-    if (contentImagePath && contentFilename) {
-      res.editor.contentImagePath = `http://uat-apidb.zoonobet.com/home/saved_image/content/${contentFilename}`;
-    }
+    // if (homeImagePath) {
+    //   if (homeFilename) {
+    //     res.editor.homeImagePath = homeFilename;
+    //   }
+    // } else if (contentImagePath && contentFilename) {
+    //   res.editor.homeImagePath = `http://uat-apidb.zoonobet.com/home/saved_image/homepage/${contentFilename}`;
+    // }
+
+    // if (contentImagePath && contentFilename) {
+    //   res.editor.contentImagePath = `http://uat-apidb.zoonobet.com/home/saved_image/content/${contentFilename}`;
+    // }
     // if (homeImagePath) {
     //   res.editor.homeImagePath = homeFilename;
     //   res.editor.contentImagePath = contentFilename;
@@ -1809,8 +1880,8 @@ editorRouter.patch(
     //   ...(contentImagePath && { contentImagePath }),
     // };
     try {
-      const updateEditor = await res.editor.save();
-      res.status(201).json(updateEditor);
+      await res.editor.save();
+      res.status(201).send({ message: "Editor update successfully" });
     } catch (err) {
       res.status(500).send({ message: err.message });
     }
@@ -1897,8 +1968,8 @@ editorRouter.post(
           editorData.homeImagePath = homeFilename;
           editorData.contentImagePath = contentFilename;
         } else {
-          editorData.homeImagePath = `http://uat-apidb.zoonobet.com/home/saved_image/homepage/${contentFilename}`;
-          editorData.contentImagePath = `http://uat-apidb.zoonobet.com/home/saved_image/content/${contentFilename}`;
+          editorData.homeImagePath = `${LOCAL_DOMAIN}home/saved_image/homepage/${contentFilename}`;
+          editorData.contentImagePath = `${LOCAL_DOMAIN}home/saved_image/content/${contentFilename}`;
         }
 
         const newEditor = new Editor(editorData);
@@ -1932,6 +2003,105 @@ editorRouter.post(
       } catch (err) {
         res.status(500).json({ message: err.message });
       }
+    }
+  }
+);
+
+editorRouter.post(
+  "/tempEditor",
+  uploadImage(),
+  parseRequestBody,
+  parseHTML,
+  parseTags,
+  parseCategories,
+  async (req, res) => {
+    const {
+      title,
+      content,
+      htmlContent,
+      tags,
+      categories,
+      headTitle,
+      headKeyword,
+      headDescription,
+      manualUrl,
+      altText,
+      topSorting,
+      hidden,
+      popularSorting,
+      recommendSorting,
+    } = res;
+
+    const contentImagePath =
+      req.files.contentImagePath && req.files.contentImagePath[0];
+    const homeImagePath = req.files.homeImagePath && req.files.homeImagePath[0];
+    try {
+      const contentFilename = contentImagePath
+        ? await processImage(contentImagePath, contentImagePath.originalname)
+        : null;
+
+      const homeFilename = homeImagePath
+        ? await processImage(homeImagePath, homeImagePath.originalname)
+        : null;
+
+      const editorData = {
+        title,
+        content,
+        htmlContent,
+        tags,
+        categories,
+        headTitle,
+        headKeyword,
+        headDescription,
+        manualUrl,
+        altText,
+        topSorting,
+        hidden,
+        popularSorting,
+        recommendSorting,
+      };
+
+      // if (newFilename) {
+      //   // editorData.homeImagePath = `/home/saved_image/homepage/${newFilename}`;
+      //   editorData.homeImagePath = `http://10.88.0.106:3000/images/homepage/${newFilename}`;
+      //   // editorData.contentImagePath = `/home/saved_image/content/${newFilename}`;
+      //   editorData.contentImagePath = `http://10.88.0.106:3000/images/content/${newFilename}`;
+      // }
+      if (homeImagePath) {
+        if (contentFilename.startsWith("http")) {
+          const newHomeUrl = copyFileAndGenerateNewUrl(homeFilename);
+          const newContentUrl = copyFileAndGenerateNewUrl(contentFilename);
+          editorData.homeImagePath = newHomeUrl;
+          editorData.contentImagePath = newContentUrl;
+        } else {
+          editorData.homeImagePath = homeFilename;
+          editorData.contentImagePath = contentFilename;
+        }
+      } else {
+        editorData.homeImagePath = `${LOCAL_DOMAIN}home/saved_image/homepage/${contentFilename}`;
+        editorData.contentImagePath = `${LOCAL_DOMAIN}home/saved_image/content/${contentFilename}`;
+      }
+
+      const newTempEditor = new tempEditor(editorData);
+      await newTempEditor.save();
+
+      await newTempEditor.updateOne(
+        { _id: newTempEditor._id },
+        {
+          $set: {
+            originalUrl: `${domain}/preview_${newTempEditor._id}`,
+          },
+        }
+      );
+
+      res.status(201).send({
+        data: {
+          id: newTempEditor._id,
+          originalUrl: newTempEditor.originalUrl,
+        },
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
     }
   }
 );
@@ -1975,5 +2145,36 @@ editorRouter.delete(
     }
   }
 );
+
+editorRouter.delete("/tempEditor", async (req, res) => {
+  try {
+    const deleteList = await tempEditor
+      .find()
+      .select("-_id contentImagePath homeImagePath");
+
+    for (let doc of deleteList) {
+      if (doc.contentImagePath.startsWith("<iframe")) {
+        //Do nothing
+      } else {
+        // Delete contentImagePath
+        let contentImagePath = url.parse(doc.contentImagePath).path;
+        let homeImagePath = url.parse(doc.homeImagePath).path;
+
+        fs.unlink(contentImagePath, () => {
+          console.log(`File ${doc.contentImagePath} was deleted`);
+        });
+
+        // Delete homeImagePath
+        fs.unlink(homeImagePath, () => {
+          console.log(`File ${doc.homeImagePath} was deleted`);
+        });
+      }
+    }
+    await tempEditor.deleteMany({});
+    res.status(201).send("Files were deleted successfully");
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+});
 
 module.exports = editorRouter;

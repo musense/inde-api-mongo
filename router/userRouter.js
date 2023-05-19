@@ -124,23 +124,43 @@ userRouter.post("/logout", async (req, res) => {
 // register
 userRouter.post("/register", async (req, res) => {
   const { email, username, password } = req.body;
+  const regexLowercase = /^(?=.*[a-z])/;
+  const regexUppercase = /^(?=.*[A-Z])/;
+  const regexMinLength = /[0-9a-zA-Z]{6,}/;
+
+  let checkLowercase = regexLowercase.test(password);
+  let checkUppercase = regexUppercase.test(password);
+  let checkMinLength = regexMinLength.test(password);
+
   try {
-    let checkUser = await User.findOne({ username });
-    let checkEmail = await User.findOne({ email });
-    if (checkUser) {
-      return res.status(400).json({ message: "username has been used" });
-    } else if (checkEmail) {
-      return res.status(400).json({ message: "email has been used" });
-    } else {
-      const postHash = await bcrypt.hash(password, saltRounds);
-      const newUser = new User({ email, username, password: postHash });
-      const saveUser = await newUser.save();
-      const registerUserSuccess = Object.assign({}, saveUser["_doc"], {
-        errorMessage: "register successfully",
-      });
-      console.log({ registerUserSuccess });
-      res.status(201).json(registerUserSuccess);
+    let checkUser = await User.findOne({ username: username });
+    let checkEmail = await User.findOne({ email: email });
+    let errors = [];
+    if (!checkLowercase) {
+      errors.push("Password must contain at least one lowercase letter.");
     }
+    if (!checkUppercase) {
+      errors.push("Password must contain at least one uppercase letter.");
+    }
+    if (!checkMinLength) {
+      errors.push("Password must be at least 6 characters.");
+    }
+    if (checkUser) {
+      errors.push("username has been used");
+    }
+    if (checkEmail) {
+      errors.push("email has been used");
+    }
+    if (errors.length > 0) {
+      return res.status(400).json({ messages: errors });
+    }
+    const postHash = await bcrypt.hash(password, saltRounds);
+    const newUser = new User({ email, username, password: postHash });
+    const saveUser = await newUser.save();
+    const registerUserSuccess = Object.assign({}, saveUser["_doc"], {
+      errorMessage: "register successfully",
+    });
+    res.status(201).json(registerUserSuccess);
   } catch (e) {
     res.status(500).send({ message: e.message });
   }

@@ -29,4 +29,5 @@ __MACOSX
 
 package-lock.json
 *.rest
+*.gitignore
 .vscode/settings.json

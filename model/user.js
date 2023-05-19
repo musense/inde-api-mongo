@@ -7,7 +7,7 @@ const validateEmail = (email) => regexEmail.test(email);
 const regexAtLeastOneDigit = /(?=.*\d)/;
 const regexAtLeastOneLowerCase = /(?=.*[a-z])/;
 const regexAtLeastOneUpperCase = /(?=.*[A-Z])/;
-const regexAtLeastEightCharacters = /[0-9a-zA-Z]{8,}/;
+const regexAtLeastEightCharacters = /[0-9a-zA-Z]{6,}/;
 
 const validatorAtLeastOneDigit = (pwd) => regexAtLeastOneDigit.test(pwd);
 const validatorAtLeastOneLowerCase = (pwd) =>

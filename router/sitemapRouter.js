@@ -4,10 +4,41 @@ const { SitemapStream, streamToPromise } = require("sitemap");
 const { createGzip } = require("zlib");
 const { Readable } = require("stream");
 const Sitemap = require("../model/sitemap");
+const Editor = require("../model/editor");
+const Categories = require("../model/categories");
+const Tags = require("../model/tags");
 require("dotenv").config();
 
 let sitemap;
 const domain = process.env.DOMAIN;
+
+sitemapRouter.get("/checkUrl/:url", async function (req, res) {
+  try {
+    const url = decodeURIComponent(req.params.url);
+    const findData = await Sitemap.findOne({ url: url }).select(
+      "url originalID type -_id"
+    );
+    let targetData;
+    switch (findData.type) {
+      case "editor":
+        targetData = await Editor.findOne({ _id: findData.originalID })
+          .populate({ path: "tags", select: "name" })
+          .populate({ path: "categories", select: "name" });
+        break;
+      case "category":
+        targetData = await Categories.findOne({ _id: findData.originalID });
+        break;
+      case "tag":
+        targetData = await Tags.findOne({ _id: findData.originalID });
+        break;
+    }
+    const result = { Type: findData.type, data: targetData };
+
+    res.status(200).send(result);
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+});
 
 sitemapRouter.get("/sitemap.xml", async function (req, res) {
   res.header("Content-Type", "application/xml");
@@ -17,7 +48,6 @@ sitemapRouter.get("/sitemap.xml", async function (req, res) {
   //   res.send(sitemap);
   //   return;
   // }
-
   try {
     const smStream = new SitemapStream({
       hostname: domain,
