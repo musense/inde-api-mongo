@@ -197,8 +197,23 @@ categoryRouter.get("/categories", parseQuery, async (req, res) => {
       .limit(limit);
 
     const totalDocs = await Categories.countDocuments().exec();
+
+    const updatedCategories = await Promise.all(
+      allCategories.map(async (category) => {
+        const sitemapUrl = await Sitemap.findOne({
+          originalID: category._id,
+          type: "category",
+        });
+        if (sitemapUrl) {
+          category = category.toObject(); // convert mongoose document to plain javascript object
+          category.sitemapUrl = sitemapUrl.url; // add url property
+        }
+        return category;
+      })
+    );
+
     const result = {
-      data: allCategories,
+      data: updatedCategories,
       totalCount: totalDocs,
       totalPages: Math.ceil(totalDocs / limit),
       limit: limit,
