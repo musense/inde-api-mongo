@@ -196,7 +196,8 @@ async function parseCategories(req, res, next) {
     }
     // console.log(categories);
     // console.log(typeof categories);
-    if (categories === null) {
+    //分類為空值時因JSON stringtify的關係會被轉成字串null
+    if (categories === null || categories[0] === null) {
       const findUncategorized = await Categories.findOne({
         name: "Uncategorized",
       }).select("_id name");
@@ -2089,7 +2090,7 @@ editorRouter.post(
         { _id: newTempEditor._id },
         {
           $set: {
-            originalUrl: `${domain}/preview_${newTempEditor._id}`,
+            originalUrl: `${domain}preview_${newTempEditor._id}`,
           },
         }
       );
