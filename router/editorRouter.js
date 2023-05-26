@@ -383,7 +383,9 @@ function parseHTML(req, res, next) {
         const altAttribute = node.alt ? `alt="${escapeHtml(node.alt)}"` : "";
         return `<img ${srcAttribute} ${altAttribute}>${children}</img>`;
       case "link":
-        return `<a href="${escapeHtml(node.url)}">${children}</a>`;
+        return `<a target="_blank" rel="noopener noreferrer" href="${escapeHtml(
+          node.url
+        )}">${children}</a>`;
       case "button":
         const buttonType = node.buttonType
           ? `type="${escapeHtml(node.buttonType)}"`
