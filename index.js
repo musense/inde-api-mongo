@@ -14,28 +14,25 @@ const https = require("https");
 
 const app = express();
 // const PORT = 4200
-const PORT = process.env.PORT || 4200;
+const PORT = process.env.PORT || 5000;
 // const CorsOrgin
-const corsOrgin = process.env.CORS_STR || "http://localhost:4200";
+// const corsOrgin = process.env.CORS_STR || "http://localhost:4200";
 // const ssl
-//const ssl = https.createServer(
-//  {
-//    key: fs.readFileSync("/etc/letsencrypt/live/bd.kashinobi.com/privkey.pem", {
-//      encoding: "utf8",
-//    }),
-//    cert: fs.readFileSync(
-//      "/etc/letsencrypt/live/bd.kashinobi.com/fullchain.pem",
-//      { encoding: "utf8" }
-//    ),
-//  },
-//  app
-//);
+const ssl = https.createServer(
+  {
+    key: fs.readFileSync("/etc/letsencrypt/live/bd.zoonobet.com/privkey.pem", {
+      encoding: "utf8",
+    }),
+    cert: fs.readFileSync(
+      "/etc/letsencrypt/live/bd.zoonobet.com/fullchain.pem",
+      { encoding: "utf8" }
+    ),
+  },
+  app
+);
 
 const corsOptions = {
-  origin: [
-    "http://uat-dashboard.zoonobet.com",
-    "http://uat-front.zoonobet.com",
-  ],
+  origin: ["https://www.zoonobet.com", "https://bp.zoonobet.com"],
   optionsSuccessStatus: 200, //
   credentials: true,
   // methods: ["GET", "POST", "PATCH", "DELETE"],
@@ -52,7 +49,7 @@ app.use(
     // secret: crypto.randomUUID(),
     name: "sid", // optional
     cookie: {
-      secure: false, //if set true only excute on https
+      secure: true, //if set true only excute on https
       // path: userRouter,
       // maxAge: new Date(253402300000000), // Approximately Friday, 31 Dec 9999 23:59:59 GMT
       httpOnly: true,
@@ -70,8 +67,8 @@ app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Credentials", true);
   res.header(
     "Access-Control-Allow-Origin",
-    "http://uat-dashboard.zoonobet.com",
-    "http://uat-front.zoonobet.com"
+    "https://www.zoonobet.com",
+    "https://bp.dashboard.zoonobet.com"
   );
   res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,PATCH");
   res.header(
@@ -88,7 +85,7 @@ app.use(editorRouter);
 app.use(tagRouter);
 
 // server.listen(4200)
-app.listen(PORT, () => {
+ssl.listen(PORT, () => {
   console.log(`server started at port ${PORT}`);
 });
 
