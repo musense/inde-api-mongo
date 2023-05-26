@@ -197,7 +197,7 @@ async function parseCategories(req, res, next) {
     // console.log(categories);
     // console.log(typeof categories);
     //分類為空值時因JSON stringtify的關係會被轉成字串null
-    if (categories === null || categories[0] === null) {
+    if (categories === null) {
       const findUncategorized = await Categories.findOne({
         name: "Uncategorized",
       }).select("_id name");
