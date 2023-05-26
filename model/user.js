@@ -18,10 +18,10 @@ const validatorAtLeastEightCharacters = (pwd) =>
   regexAtLeastEightCharacters.test(pwd);
 
 const validatePasswordMany = [
-  {
-    validator: validatorAtLeastOneDigit,
-    msg: "password should at least contain one digit!",
-  },
+  // {
+  //   validator: validatorAtLeastOneDigit,
+  //   msg: "password should at least contain one digit!",
+  // },
   {
     validator: validatorAtLeastOneLowerCase,
     msg: "password should at least contain one lower case!",
