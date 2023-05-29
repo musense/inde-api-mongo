@@ -750,7 +750,7 @@ editorRouter.get("/editor", parseQuery, async (req, res) => {
     const titlesQuery = req.query.title;
     const categoriesQuery = req.query.category;
 
-    const query = {};
+    const query = { hidden: false };
 
     let start;
     let end;
