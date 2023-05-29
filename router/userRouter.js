@@ -40,45 +40,6 @@ userRouter.get("/user", verifyUser, async (req, res) => {
   }
 });
 
-// login
-// userRouter.post("/login", async (req, res) => {
-//   const { email, username, password } = req.body;
-//   let user;
-//   try {
-//     if (email == undefined && username == undefined) {
-//       return res.status(404).json({ message: "can't find user!" });
-//     }
-//     if (email == undefined) {
-//       user = await User.findOne({ username }).exec();
-//       if (!user) {
-//         return res.status(404).json({ message: "can't find user!" });
-//       }
-//       let result = await bcrypt.compare(password, user.password);
-//       if (result) {
-//         // req.session.isVerified = true;
-//         console.log(req.session);
-//         return res.status(200).send(user);
-//       } else {
-//         return res.status(404).json({ message: "login failed" });
-//       }
-//     } else {
-//       user = await User.findOne({ email }).exec();
-//       if (!user) {
-//         return res.status(404).json({ message: "can't find user!" });
-//       }
-//       let result = await bcrypt.compare(password, user.password);
-//       if (result) {
-//         req.session.isVerified = true;
-//         console.log(req.session);
-//         return res.status(200).send(user);
-//       } else {
-//         return res.status(404).json({ message: "login failed" });
-//       }
-//     }
-//   } catch (e) {
-//     return res.status(500).send({ message: e.message });
-//   }
-// });
 userRouter.post("/login", async (req, res) => {
   const { username, password } = req.body;
   let user;

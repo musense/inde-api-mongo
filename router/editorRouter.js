@@ -16,16 +16,10 @@ const url = require("url");
 require("dotenv").config();
 
 const editorRouter = new express.Router();
-// *simulate delay situation in real world
-// editorRouter.use(function (req, res, next) {
-//     console.time('simulate get editor delay...')
-//     setTimeout(() => {
-//         next()
-//         console.timeEnd('simulate get editor delay...')
-//     }, 0 * 1000)
-// })
+
 const domain = process.env.DOMAIN;
 const LOCAL_DOMAIN = process.env.LOCAL_DOMAIN;
+
 //set session verify
 const verifyUser = (req, res, next) => {
   if (req.session.isVerified) {
@@ -101,30 +95,12 @@ function parseRequestBody(req, res, next) {
         : altText === null
         ? null
         : JSON.parse(altText);
-    // res.topSorting =
-    //   topSorting === undefined
-    //     ? undefined
-    //     : topSorting === null
-    //     ? null
-    //     : JSON.parse(topSorting);
     res.hidden =
       hidden === undefined
         ? undefined
         : hidden === null
         ? false
         : JSON.parse(hidden);
-    // res.popularSorting =
-    //   popularSorting === undefined
-    //     ? undefined
-    //     : popularSorting === null
-    //     ? null
-    //     : JSON.parse(popularSorting);
-    // res.recommendSorting =
-    //   recommendSorting === undefined
-    //     ? undefined
-    //     : recommendSorting === null
-    //     ? null
-    //     : JSON.parse(recommendSorting);
   }
   next();
 }
@@ -136,46 +112,6 @@ async function getMaxSerialNumber() {
   return maxSerialNumberEditor ? maxSerialNumberEditor.serialNumber : 0;
 }
 
-// async function parseCategories(req, res, next) {
-//   try {
-//     let categoryJsonString = req.body.categories;
-//     let category =
-//       categoryJsonString !== undefined ? JSON.parse(categoryJsonString) : null;
-
-//     if (!category) {
-//       res.categories = null;
-//       return next();
-//     }
-
-//     if (category.__isNew__ === true) {
-//       const newCategory = new Categories({ name: category.label });
-//       await newCategory.save();
-
-//       const newCategoryUrl = `https://www.kashinobi.com/${newCategory.name}.html`;
-
-//       const newCategorySitemap = new Sitemap({
-//         url: newCategoryUrl,
-//         originalID: newCategory._id,
-//         type: "category",
-//       });
-//       await newCategorySitemap.save();
-//       res.categories = newCategory._id;
-//     } else {
-//       const findCategory = await Categories({
-//         _id: category.value,
-//         name: category.label,
-//       });
-
-//       if (!findCategory) {
-//         throw new Error("Cannot find existing label.");
-//       }
-//       res.categories = findCategory._id;
-//     }
-//     next();
-//   } catch (error) {
-//     res.status(400).send({ message: error.message });
-//   }
-// }
 async function parseCategories(req, res, next) {
   try {
     let categoryJsonString = req.body.categories;
@@ -194,8 +130,6 @@ async function parseCategories(req, res, next) {
           ? null
           : JSON.parse(categoryJsonString);
     }
-    // console.log(categories);
-    // console.log(typeof categories);
     //分類為空值時因JSON stringtify的關係會被轉成字串null
     if (categories === null) {
       const findUncategorized = await Categories.findOne({
@@ -218,20 +152,6 @@ async function parseCategories(req, res, next) {
     const categoriesMap = new Map();
 
     for (const category of categories) {
-      // if (category.__isNew__ === true) {
-      //   const newCategory = new Categories({ name: category.label });
-      //   await newCategory.save();
-      //   categoriesMap.set(category.label, newCategory._id);
-
-      //   const newCategoryUrl = `${domain}c_${newCategory._id}.html`;
-
-      //   const newCategorySitemap = new Sitemap({
-      //     url: newCategoryUrl,
-      //     originalID: newCategory._id,
-      //     type: "category",
-      //   });
-      //   await newCategorySitemap.save();
-      // } else {
       if (!categoriesMap.has(category.label)) {
         const existingCategory = await Categories.findOne({
           name: category.label,
@@ -243,7 +163,6 @@ async function parseCategories(req, res, next) {
           throw new Error("Category name error");
         }
       }
-      // }
     }
     const categoriesArray = categories.map((category) =>
       categoriesMap.get(category.label)
@@ -271,8 +190,6 @@ async function parseTags(req, res, next) {
           ? null
           : JSON.parse(tagJsonString);
     }
-    // console.log(tags);
-    // console.log(typeof tags);
 
     if (tags === null) {
       res.tags = [];
@@ -402,38 +319,9 @@ function parseHTML(req, res, next) {
 
   res.content = content;
   res.htmlContent = htmlContent;
-  // console.log(req.body.content);
-  // console.log(typeof content);
-  // console.log(Array.isArray(content));
-  // console.log(htmlContent);
-  // console.log(typeof htmlContent);
   next();
 }
 
-function parseJSON(req, res, next) {
-  if (res.editor.constructor === Array) {
-    res.editor
-      .filter((edit) => edit.content !== null)
-      .map((edit) => {
-        const jsonDataObject = JSON.parse(edit.content);
-        const htmlData = json2html(jsonDataObject);
-        edit.content = htmlData;
-      });
-  } else if (typeof res.editor === "object") {
-    if (!res.editor.content) {
-      res.editor.content = "";
-      next();
-      return;
-    }
-    const content = res.editor.content;
-    const jsonDataObject = JSON.parse(content);
-    const htmlData = json2html(jsonDataObject);
-
-    res.editor.content = htmlData;
-  }
-
-  next();
-}
 //後台編輯熱門文章用
 async function getNewPopularEditors() {
   // 1. 取 popular 不為空值的文章
@@ -475,23 +363,6 @@ async function getNewUnpopularEditors(skip, limit, name) {
   const popularEditors = await getNewPopularEditors();
   //2. Get popular editors' _id array
   const popularEditorIds = popularEditors.map((editor) => editor._id);
-  // 3. Find all editors that don't have _id in the newPopularEditors array
-  // const nonPopularEditors = await Editor.find({
-  //   _id: { $nin: popularEditorIds },
-  // })
-  //   .sort({ pageView: -1, createdAt: -1 })
-  //   .skip(skip)
-  //   .limit(limit)
-  //   .select("title content createdAt popularSorting pageView homeImagePath");
-  // // 4. Get the total number of documents that don't have _id in the popularEditorIds array
-  // const totalDocs = await Editor.countDocuments({
-  //   _id: { $nin: popularEditorIds },
-  // }).exec();
-
-  // return {
-  //   editors: nonPopularEditors,
-  //   totalCount: totalDocs,
-  // };
   // Create the base query
   const baseQuery = {
     _id: { $nin: popularEditorIds },
@@ -538,17 +409,6 @@ async function getEditor(req, res, next) {
   next();
 }
 
-async function getAllEditor(req, res, next) {
-  try {
-    const editor = await Editor.find({}).select("-__v -id");
-
-    res.editor = editor;
-  } catch (err) {
-    res.status(500).send({ message: err.message });
-  }
-  next();
-}
-
 function isPositiveInteger(input) {
   return typeof input === "number" && Number.isInteger(input) && input >= 0;
 }
@@ -589,17 +449,6 @@ function uploadImage() {
       fileSize: 10000000, //maximim size 10MB
       fieldSize: 10 * 1024 * 1024,
     },
-    // fileFilter: function (req, file, cb) {
-    //   // Check the file type and only allow image files to be uploaded.
-    //   if (!file) {
-    //     // If there is no file, return true
-    //     return cb(null, true);
-    //   }
-    //   if (!file.mimetype.startsWith("image/")) {
-    //     return cb(new Error("Image file only"), false);
-    //   }
-    //   cb(null, true);
-    // },
   });
   // return upload.single("homeImagePath");
   return upload.fields([
@@ -607,53 +456,6 @@ function uploadImage() {
     { name: "contentImagePath", maxCount: 1 },
   ]);
 }
-
-// async function processImage(fileBuffer, originalFilename) {
-//   if (!fileBuffer || !originalFilename) {
-//     // If there is no fileBuffer or originalFilename, return null
-//     return null;
-//   }
-//   // compress image using sharp
-//   const compressedImage = await sharp(fileBuffer)
-//     .resize(1024, 1024, { fit: "inside", withoutEnlargement: true })
-//     .toBuffer({ resolveWithObject: true, quality: 90 });
-
-//   const compressedImage2 = await sharp(fileBuffer)
-//     .resize(450, 300, { fit: "inside", withoutEnlargement: true })
-//     .toBuffer({ resolveWithObject: true, quality: 70 });
-
-//   const extension = originalFilename.substring(
-//     originalFilename.lastIndexOf(".")
-//   );
-//   const filenameWithoutExtension = originalFilename.substring(
-//     0,
-//     originalFilename.lastIndexOf(".")
-//   );
-//   const newFilename =
-//     slugify(filenameWithoutExtension, {
-//       replacement: "-", // replace spaces with replacement character, defaults to `-`
-//       remove: /[^a-zA-Z0-9]/g, // remove characters that match regex, defaults to `undefined`
-//       lower: true, // convert to lower case, defaults to `false`
-//       strict: false, // strip special characters except replacement, defaults to `false`
-//       trim: true, // trim leading and trailing replacement chars, defaults to `true`
-//     }) +
-//     "-" +
-//     Date.now() +
-//     extension;
-
-//   // save compressed image to disk
-//   fs.writeFileSync(
-//     `C:/Users/user/Desktop/test/uploadtest/content/${newFilename}`,
-//     // `/home/saved_image/content/${newFilename}`,
-//     compressedImage.data
-//   );
-//   fs.writeFileSync(
-//     `C:/Users/user/Desktop/test/uploadtest/homepage/${newFilename}`,
-//     // `/home/saved_image/homepage/${newFilename}`,
-//     compressedImage2.data
-//   );
-//   return newFilename;
-// }
 
 async function processImage(file, originalFilename) {
   // console.log(file);
@@ -783,19 +585,6 @@ editorRouter.get("/editor", parseQuery, async (req, res) => {
       });
       return;
     }
-    // if (startDate && !parseDate(startDate)) {
-    //   res.status(400).send({
-    //     message: "Invalid startDate. It must be a valid date format.",
-    //   });
-    //   return;
-    // }
-
-    // if (endDate && !parseDate(endDate)) {
-    //   res
-    //     .status(400)
-    //     .send({ message: "Invalid endDate. It must be a valid date format." });
-    //   return;
-    // }
 
     if (titlesQuery) {
       const titlesArray = titlesQuery.split(",");
@@ -815,32 +604,6 @@ editorRouter.get("/editor", parseQuery, async (req, res) => {
       query.categories = category._id;
     }
 
-    // if (startDate && endDate) {
-    //   const start = new Date(startDate);
-    //   const end = new Date(endDate);
-
-    //   // 處理只有日期的輸入
-    //   if (!startDate.includes("T")) {
-    //     start.setUTCHours(0, 0, 0, 0);
-    //   }
-    //   if (!endDate.includes("T")) {
-    //     end.setUTCHours(23, 59, 59, 999);
-    //   }
-
-    //   query.createdAt = { $gte: start, $lt: end };
-    // } else if (startDate) {
-    //   const start = new Date(startDate);
-
-    //   // 處理只有日期的輸入
-    //   if (!startDate.includes("T")) {
-    //     start.setUTCHours(0, 0, 0, 0);
-    //   }
-
-    //   const end = new Date(start);
-    //   end.setDate(start.getDate() + 1);
-
-    //   query.createdAt = { $gte: start, $lt: end };
-    // }
     if (startDate && endDate) {
       query.createdAt = { $gte: start, $lt: end };
     } else if (startDate) {
@@ -883,10 +646,6 @@ editorRouter.get("/editor/popular", parseQuery, async (req, res) => {
   const { popular: popularQueryParam } = req.query;
   let popular;
 
-  // if (popularQueryParam === undefined) {
-  //   popular = undefined;
-  // Do nothing, just pass the control to the next handler}
-
   popular = parseInt(popularQueryParam, 10);
 
   if (isNaN(popular) || popular < 0 || popular > 1) {
@@ -896,26 +655,6 @@ editorRouter.get("/editor/popular", parseQuery, async (req, res) => {
   const skip = pageNumber ? (pageNumber - 1) * limit : 0;
 
   try {
-    // if (popular === undefined) {
-    //   const popularItems = await getNewPopularEditors();
-
-    //   const { editors: nonPopularEditors } = await getNewUnpopularEditors(
-    //     skip,
-    //     10
-    //   );
-
-    //   const items = popularItems.concat(nonPopularEditors);
-    //   const totalDocs = items.length;
-    //   const result = {
-    //     data: items,
-    //     totalCount: totalDocs,
-    //     totalPages: Math.ceil(totalDocs / limit),
-    //     limit: limit,
-    //     currentPage: pageNumber,
-    //   };
-
-    //   res.status(200).json(result);}
-
     //不論前後台顯示都是只顯示熱門的五筆
     if (popular === 1) {
       const PopularEditors = await getNewPopularEditors();
@@ -945,46 +684,6 @@ editorRouter.get("/editor/popular", parseQuery, async (req, res) => {
     res.status(500).send({ message: err.message });
   }
 });
-
-//列出熱門文章(前後台)
-// editorRouter.get("/editor/popular", async (req, res) => {
-//   try {
-//     const newPopularEditors = await getNewPopularEditors();
-
-//     res.send(newPopularEditors);
-//   } catch (e) {
-//     res.status(500).send({ message: e.message });
-//   }
-// });
-
-//後台依照頁數列出目前非熱門文章
-// editorRouter.get("/editor/unpopular", async (req, res) => {
-//   try {
-//     // 1. Get top 5 pageVies data
-//     const popularEditors = await getNewPopularEditors();
-//     const pageNumber = parseInt(req.query.pageNumber, 10) || 1;
-
-//     if (isNaN(pageNumber) || pageNumber < 1) {
-//       return res.status(400).send({ message: "Invalid page number" });
-//     }
-
-//     //2. Get popular editors' _id array
-//     const popularEditorIds = popularEditors.map((editor) => editor._id);
-
-//     // 3. Find all editors that don't have _id in the newPopularEditors array
-//     const nonPopularEditors = await Editor.find({
-//       _id: { $nin: popularEditorIds },
-//     })
-//       .sort({ pageView: -1, createdAt: -1 })
-//       .skip((pageNumber - 1) * 10)
-//       .limit(10 * pageNumber);
-
-//     res.send(nonPopularEditors);
-//   } catch (e) {
-//     console.error(e);
-//     res.status(500).send({ message: e.message });
-//   }
-// });
 
 //後台搜尋非熱門文章
 editorRouter.get(
@@ -1116,29 +815,6 @@ editorRouter.get("/editor/recommend", parseQuery, async (req, res) => {
         },
       ]).exec();
 
-      //   {
-      //     $skip: skip,
-      //   },
-      //   {
-      //     $limit: limit,
-      //   },
-      //   {
-      //     $project: {
-      //       serialNumber: 1,
-      //       title: 1,
-      //       content: 1,
-      //       createdAt: 1,
-      //       recommendSorting: 1,
-      //       homeImagePath: 1,
-      //       hidden: 1,
-      //     },
-      //   },
-      // ]).exec();
-
-      // query.recommendSorting = { $ne: null };
-      // query.hidden = false;
-
-      // const totalDocs = await Editor.countDocuments(query).exec();
       const [{ data, totalCount }] = allItems;
       const totalDocs = totalCount[0] ? totalCount[0].count : 0;
 
@@ -1151,38 +827,7 @@ editorRouter.get("/editor/recommend", parseQuery, async (req, res) => {
       };
 
       res.status(200).json(result);
-    }
-    // else if (recommend === undefined) {
-    //   const recommendItems = await Editor.find({
-    //     recommendSorting: { $ne: null },
-    //   })
-    //     .sort({ recommendSorting: 1, createdAt: -1 })
-    //     .limit(10)
-    //     .select(
-    //       "serialNumber title content createdAt recommendSorting homeImagePath"
-    //     )
-    //     .exec();
-
-    //   const nonRecommendItems = await Editor.find({ recommendSorting: null })
-    //     .sort({ createdAt: -1 })
-    //     .limit(10)
-    //     .select(
-    //       "serialNumber title content createdAt recommendSorting homeImagePath"
-    //     )
-    //     .exec();
-
-    //   const items = recommendItems.concat(nonRecommendItems);
-    //   const totalDocs = items.length;
-    //   const result = {
-    //     data: items,
-    //     totalCount: totalDocs,
-    //     totalPages: Math.ceil(totalDocs / limit),
-    //     limit: limit,
-    //     currentPage: pageNumber,
-    //   };
-
-    //   res.status(200).json(result);}
-    else {
+    } else {
       const items = await Editor.find(query)
         .sort({ recommendSorting: 1, createdAt: -1 })
         .skip(skip)
@@ -1269,19 +914,6 @@ editorRouter.get(
     }
   }
 );
-
-//列出前台首頁最新五篇文章
-// editorRouter.get("/editor/news", async (req, res) => {
-//   try {
-//     const newsEditors = await Editor.find()
-//       .select("title content homeImagePath")
-//       .sort({ createdAt: -1 })
-//       .limit(5);
-//     res.send(newsEditors);
-//   } catch (e) {
-//     res.status(500).send({ message: e.message });
-//   }
-// });
 
 //前後台列出置頂與最新文章
 editorRouter.get("/editor/topAndNews", parseQuery, async (req, res) => {
@@ -1379,30 +1011,6 @@ editorRouter.get("/editor/topAndNews", parseQuery, async (req, res) => {
           },
         },
       ]).exec();
-      //   {
-      //     $sort: { sortTop: 1 },
-      //   },
-      //   {
-      //     $skip: skip,
-      //   },
-      //   {
-      //     $limit: limit,
-      //   },
-      //   {
-      //     $project: {
-      //       serialNumber: 1,
-      //       title: 1,
-      //       content: 1,
-      //       createdAt: 1,
-      //       topSorting: 1,
-      //       homeImagePath: 1,
-      //     },
-      //   },
-      // ]).exec();
-
-      // query.hidden = false;
-
-      // const totalDocs = await Editor.countDocuments(query).exec();
 
       const [{ data, totalCount }] = allItems;
       const totalDocs = totalCount[0] ? totalCount[0].count : 0;
@@ -1416,32 +1024,7 @@ editorRouter.get("/editor/topAndNews", parseQuery, async (req, res) => {
       };
 
       res.status(200).json(result);
-    }
-    // else if (top === undefined) {
-    // const topItems = await Editor.find({ topSorting: { $ne: null } })
-    //   .sort({ topSorting: 1, createdAt: -1 })
-    //   .limit(10)
-    //   .select("serialNumber title content createdAt topSorting homeImagePath")
-    //   .exec();
-
-    // const nonTopItems = await Editor.find({ topSorting: null })
-    //   .sort({ createdAt: -1 })
-    //   .limit(10)
-    //   .select("serialNumber title content createdAt topSorting homeImagePath")
-    //   .exec();
-
-    // const items = topItems.concat(nonTopItems);
-    // const totalDocs = items.length;
-    // const result = {
-    //   data: items,
-    //   totalCount: totalDocs,
-    //   totalPages: Math.ceil(totalDocs / limit),
-    //   limit: limit,
-    //   currentPage: pageNumber,
-    // };
-
-    // res.status(200).json(result);}
-    else {
+    } else {
       const items = await Editor.find(query)
         .sort({ topSorting: 1, createdAt: -1 })
         .skip(skip)
@@ -1613,35 +1196,6 @@ editorRouter.get("/domainInfo", async (req, res, next) => {
   }
 });
 
-// editorRouter.get(
-//   "/editor/tag/:tag",
-//   async (req, res, next) => {
-//     const tag = req.params.tag;
-//     console.log(tag);
-//     try {
-//       const editors = await Editor.find();
-
-//       const editorsIncludesTag = editors.filter((editor) =>
-//         editor.tags.includes(tag.toLowerCase())
-//       );
-
-//       res.editor = editorsIncludesTag;
-//       next();
-//     } catch (e) {
-//       res.status(500).send({ message: e.message });
-//     }
-//   },
-//   parseJSON,
-//   async (req, res) => {
-//     const { editor: editorList } = res;
-//     try {
-//       res.send(editorList);
-//     } catch (e) {
-//       res.status(500).send({ message: e.message });
-//     }
-//   }
-// );
-
 //新增文章點擊率
 editorRouter.patch(
   "/editor/incrementPageview/:id",
@@ -1791,18 +1345,6 @@ editorRouter.patch(
       hidden,
     } = res;
 
-    // const newFilename = req.file
-    //   ? await processImage(req.file, req.file.originalname)
-    //   : null;
-    // if (newFilename) {
-    //   if (newFilename.startsWith("<iframe")) {
-    //     res.editor.homeImagePath = newFilename;
-    //     res.editor.contentImagePath = newFilename;
-    //   } else {
-    //     res.editor.homeImagePath = `http://10.88.0.106:3000/images/homepage/${newFilename}`;
-    //     res.editor.contentImagePath = `http://10.88.0.106:3000/images/content/${newFilename}`;
-    //   }
-    // }
     const contentImagePath =
       req.files.contentImagePath && req.files.contentImagePath[0];
     const homeImagePath = req.files.homeImagePath && req.files.homeImagePath[0];
@@ -1825,25 +1367,6 @@ editorRouter.patch(
       }
     }
 
-    // if (homeImagePath) {
-    //   if (homeFilename) {
-    //     res.editor.homeImagePath = homeFilename;
-    //   }
-    // } else if (contentImagePath && contentFilename) {
-    //   res.editor.homeImagePath = `http://uat-apidb.zoonobet.com/home/saved_image/homepage/${contentFilename}`;
-    // }
-
-    // if (contentImagePath && contentFilename) {
-    //   res.editor.contentImagePath = `http://uat-apidb.zoonobet.com/home/saved_image/content/${contentFilename}`;
-    // }
-    // if (homeImagePath) {
-    //   res.editor.homeImagePath = homeFilename;
-    //   res.editor.contentImagePath = contentFilename;
-    // } else {
-    //   res.editor.homeImagePath = `http://10.88.0.106:5050/images/homepage/${contentFilename}`;
-    //   res.editor.contentImagePath = `http://10.88.0.106:5050/images/content/${contentFilename}`;
-    // }
-
     if (manualUrl !== undefined) {
       res.editor.manualUrl = manualUrl;
       await Sitemap.updateOne(
@@ -1863,25 +1386,6 @@ editorRouter.patch(
     if (altText !== undefined) res.editor.altText = altText;
     if (hidden !== undefined) res.editor.hidden = hidden;
 
-    // console.log(res.editor);
-    // const updateData = {
-    //   ...(serialNumber && { serialNumber }),
-    //   ...(title && { title }),
-    //   ...(content && { content }),
-    //   ...(htmlContent && { htmlContent }),
-    //   ...(headTitle && { headTitle }),
-    //   ...(headKeyword && { headKeyword }),
-    //   ...(headDescription && { headDescription }),
-    //   ...(originalUrl && { originalUrl }),
-    //   ...(manualUrl && { manualUrl }),
-    //   ...(altText && { altText }),
-    //   ...(topSorting && { topSorting }),
-    //   ...(hidden && { hidden }),
-    //   ...(popularSorting && { popularSorting }),
-    //   ...(recommendSorting && { recommendSorting }),
-    //   ...(homeImagePath && { homeImagePath }),
-    //   ...(contentImagePath && { contentImagePath }),
-    // };
     try {
       await res.editor.save();
       res.status(201).send({ message: "Editor update successfully" });
@@ -1961,12 +1465,6 @@ editorRouter.post(
           recommendSorting,
         };
 
-        // if (newFilename) {
-        //   // editorData.homeImagePath = `/home/saved_image/homepage/${newFilename}`;
-        //   editorData.homeImagePath = `http://10.88.0.106:3000/images/homepage/${newFilename}`;
-        //   // editorData.contentImagePath = `/home/saved_image/content/${newFilename}`;
-        //   editorData.contentImagePath = `http://10.88.0.106:3000/images/content/${newFilename}`;
-        // }
         if (homeImagePath) {
           editorData.homeImagePath = homeFilename;
           editorData.contentImagePath = contentFilename;
@@ -2064,12 +1562,6 @@ editorRouter.post(
         recommendSorting,
       };
 
-      // if (newFilename) {
-      //   // editorData.homeImagePath = `/home/saved_image/homepage/${newFilename}`;
-      //   editorData.homeImagePath = `http://10.88.0.106:3000/images/homepage/${newFilename}`;
-      //   // editorData.contentImagePath = `/home/saved_image/content/${newFilename}`;
-      //   editorData.contentImagePath = `http://10.88.0.106:3000/images/content/${newFilename}`;
-      // }
       if (homeImagePath) {
         if (contentFilename.startsWith("http")) {
           const newHomeUrl = copyFileAndGenerateNewUrl(homeFilename);

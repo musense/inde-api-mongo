@@ -7,28 +7,6 @@ require("dotenv").config();
 const tagRouter = new express.Router();
 const domain = process.env.DOMAIN;
 
-// *simulate delay situation in real world
-// tagRouter.use(function (req, res, next) {
-//     console.time('simulate get tag delay...')
-//     setTimeout(() => {
-//         next()
-//         console.timeEnd('simulate get tag delay...')
-//     }, 0 * 1000)
-// })
-
-// async function getAllTags(req, res, next) {
-//   try {
-//     const tagList = await Tags.find({})
-//       // .limit(10)
-//       .sort({ sorting: 1, createdAt: -1 });
-
-//     res.tagList = tagList;
-//     next();
-//   } catch (e) {
-//     next(e);
-//     res.status(500).send({ message: e.message });
-//   }
-// }
 //set session verify
 const verifyUser = (req, res, next) => {
   if (req.session.isVerified) {
