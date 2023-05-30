@@ -546,13 +546,15 @@ function copyFileAndGenerateNewUrl(originalUrl) {
 //後台編輯文章處顯示用
 editorRouter.get("/editor", parseQuery, async (req, res) => {
   try {
-    const { startDate, endDate, pageNumber, limit } = req.query;
+    const { startDate, endDate } = req.query;
+    const { pageNumber, limit } = req;
+
     const skip = pageNumber ? (pageNumber - 1) * limit : 0;
 
     const titlesQuery = req.query.title;
     const categoriesQuery = req.query.category;
 
-    const query = { hidden: false };
+    const query = {};
 
     let start;
     let end;
@@ -1211,7 +1213,7 @@ editorRouter.patch(
         { new: true }
       );
 
-      res.status(201).json({
+      res.status(200).json({
         message: "Page view count incremented",
         articleTitle: article.title,
       });
@@ -1234,7 +1236,7 @@ editorRouter.patch(
       );
 
       // 回傳更新筆數
-      res.status(201).json({
+      res.status(200).json({
         totalUpdate: result.modifiedCount,
         matchedCount: result.matchedCount,
       });
@@ -1275,7 +1277,7 @@ editorRouter.patch(
         }
       }
       res
-        .status(201)
+        .status(200)
         .send({ updateCount: updateCount, failedCount: failedCount });
     } catch (err) {
       res.status(500).send({ message: err.message });
@@ -1313,7 +1315,7 @@ editorRouter.patch(
         }
       }
       res
-        .status(201)
+        .status(200)
         .send({ updateCount: updateCount, failedCount: failedCount });
     } catch (err) {
       res.status(500).send({ message: err.message });
@@ -1388,7 +1390,7 @@ editorRouter.patch(
 
     try {
       await res.editor.save();
-      res.status(201).send({ message: "Editor update successfully" });
+      res.status(200).send({ message: "Editor update successfully" });
     } catch (err) {
       res.status(500).send({ message: err.message });
     }
@@ -1634,7 +1636,7 @@ editorRouter.delete(
         return res.status(404).json({ message: "No matching sitemap found" });
       }
 
-      res.status(201).json({ message: "Delete editor successful!" });
+      res.status(200).json({ message: "Delete editor successful!" });
     } catch (e) {
       res.status(500).send({ message: e.message });
     }
@@ -1666,7 +1668,7 @@ editorRouter.delete("/tempEditor", async (req, res) => {
       }
     }
     await tempEditor.deleteMany({});
-    res.status(201).send("Files were deleted successfully");
+    res.status(200).send("Files were deleted successfully");
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
