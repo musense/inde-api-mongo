@@ -320,6 +320,21 @@ categoryRouter.get("/categories/casino", parseQuery, async (req, res) => {
   }
 });
 
+categoryRouter.get("/category/:name", async (req, res) => {
+  const categoryName = req.params.name;
+  try {
+    const categoryInfo = await Categories.findOne({
+      name: categoryName,
+    }).select("-__v");
+    if (!categoryInfo) {
+      return res.status(404).json({ message: "can't find category!" });
+    }
+    res.status(200).send(categoryInfo);
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+});
+
 //Menubar列出上層文章分類與子分類
 categoryRouter.get("/categories/upper_category", async (req, res) => {
   try {

@@ -618,7 +618,8 @@ editorRouter.get("/editor", parseQuery, async (req, res) => {
     const editorsQuery = Editor.find(query)
       .populate({ path: "categories", select: "name" })
       .populate({ path: "tags", select: "name" })
-      .sort({ updatedAt: -1 });
+      .sort({ updatedAt: -1 })
+      .select("-content -htmlContent");
 
     if (!limit && limit > 0) {
       editorsQuery.skip(skip).limit(limit);

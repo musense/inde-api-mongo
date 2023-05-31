@@ -255,9 +255,23 @@ tagRouter.get("/tags/tagSearch/:name", parseQuery, async (req, res) => {
   }
 });
 
-tagRouter.get("/tags/:id", getTag, async (req, res) => {
+tagRouter.get("/tags/:name", async (req, res) => {
   try {
-    res.status(200).send(res.tag);
+    const tagName = req.params.name;
+
+    let tag;
+    try {
+      tag = await Tags.findOne({ name: tagName }).select(
+        "-updatedAt -createdAt -__v"
+      );
+      if (tag === undefined) {
+        return res.status(404).json({ message: "can't find tag!" });
+      }
+    } catch (err) {
+      return res.status(500).send({ message: err.message });
+    }
+
+    res.status(200).send(tag);
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
