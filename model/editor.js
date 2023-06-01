@@ -90,6 +90,9 @@ const editorSchema = mongoose.Schema(
       type: String,
       trim: true,
     },
+    scheduledAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,

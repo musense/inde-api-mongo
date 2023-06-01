@@ -280,15 +280,15 @@ function parseHTML(req, res, next) {
       case "h1":
         return `<h1 style="text-align: ${
           node.align || "initial"
-        };">${children}</h1>`;
+        };"><strong>${children}</strong></h1>`;
       case "h2":
         return `<h2 style="text-align: ${
           node.align || "initial"
-        };">${children}</h2>`;
+        };"><strong>${children}</strong></h2>`;
       case "h3":
         return `<h3 style="text-align: ${
           node.align || "initial"
-        };">${children}</h3>`;
+        };"><strong>${children}</strong></h3>`;
       case "list-item":
         return `<li>${children}</li>`;
       case "numbered-list":
@@ -618,14 +618,19 @@ editorRouter.get("/editor", parseQuery, async (req, res) => {
     const editorsQuery = Editor.find(query)
       .populate({ path: "categories", select: "name" })
       .populate({ path: "tags", select: "name" })
-      .sort({ updatedAt: -1 })
-      .select("-content -htmlContent");
+      .sort({ createdAt: -1 })
+      .select("-content -htmlContent")
+      .lean(false);
 
-    if (!limit && limit > 0) {
+    if (limit && limit > 0) {
       editorsQuery.skip(skip).limit(limit);
     }
 
-    const editors = await editorsQuery;
+    let editors = await editorsQuery;
+    editors = editors.map((editor) => ({
+      ...editor.toObject(),
+      status: editor.status,
+    }));
 
     const totalDocs = await Editor.countDocuments(query).exec();
 
@@ -1323,6 +1328,36 @@ editorRouter.patch(
     }
   }
 );
+
+editorRouter.patch("/editor/checkSchedule", async (req, res) => {
+  //取得當前時間區間
+  let now = new Date();
+  let oneHourAgo = new Date();
+  oneHourAgo.setTime(oneHourAgo.getTime() - 1 * 60 * 60 * 1000);
+  try {
+    //取得需要發布的名單
+    const listEditor = await Editor.find({
+      hidden: true,
+      scheduledAt: {
+        $exists: true,
+        $ne: null,
+        $ne: "",
+        $gte: oneHourAgo,
+        $lte: now,
+      },
+    }).select("-content -htmlContent");
+    let updateCount = 0;
+    for (let editor of listEditor) {
+      editor.hidden = false;
+      await editor.save();
+      updateCount++;
+    }
+
+    res.status(200).send({ message: `Update ${updateCount} successfully` });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+});
 
 editorRouter.patch(
   "/editor/:id",
