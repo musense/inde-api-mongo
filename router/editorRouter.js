@@ -1139,7 +1139,7 @@ editorRouter.get("/editor/relatedArticles/:id", async (req, res) => {
       _id: { $ne: targetArticleId },
       hidden: false,
     })
-      .select("title tags createdAt homeImagePath categories altText")
+      .select("title tags createdAt hidden homeImagePath categories altText")
       .populate({ path: "tags", select: "name" })
       .populate({ path: "categories", select: "name" });
     relatedArticles.forEach((article) => {
