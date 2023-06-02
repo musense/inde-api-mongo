@@ -1601,7 +1601,7 @@ editorRouter.post(
       };
 
       if (homeImagePath) {
-        if (contentFilename.startsWith("http")) {
+        if (contentFilename && contentFilename.startsWith("http")) {
           const newHomeUrl = copyFileAndGenerateNewUrl(homeFilename);
           const newContentUrl = copyFileAndGenerateNewUrl(contentFilename);
           editorData.homeImagePath = newHomeUrl;
