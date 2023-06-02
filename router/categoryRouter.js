@@ -136,7 +136,7 @@ async function getSpecificClassifications(id, limit, pageNumber) {
     hidden: false,
   })
     .select(
-      "serialNumber title categories tags homeImagePath contentImagePath createdAt"
+      "serialNumber title categories tags hidden homeImagePath contentImagePath createdAt"
     )
     .populate({ path: "categories", select: "name" })
     .populate({ path: "tags", select: "name" })
