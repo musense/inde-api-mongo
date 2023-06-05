@@ -1409,7 +1409,7 @@ editorRouter.patch(
       res.editor.manualUrl = manualUrl;
       await Sitemap.updateOne(
         { originalID: res.editor._id, type: "editor" },
-        { $set: { url: `${domain}${manualUrl}.html` } }
+        { $set: { url: `${domain}p_${manualUrl}.html` } }
       );
     }
     if (tags !== undefined) res.editor.tags = [...tags];
@@ -1516,11 +1516,11 @@ editorRouter.post(
 
         //save sitemap
         let newEditorSitemap;
-        const newEditorOriginalUrl = `${domain}${newEditor._id}.html`;
+        const newEditorOriginalUrl = `${domain}p_${newEditor._id}.html`;
         if (newEditor) {
           let sitemapUrl;
           if (newEditor.manualUrl) {
-            sitemapUrl = `${domain}${newEditor.manualUrl}.html`;
+            sitemapUrl = `${domain}p_${newEditor.manualUrl}.html`;
           } else {
             sitemapUrl = newEditorOriginalUrl;
           }
