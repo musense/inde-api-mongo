@@ -270,6 +270,14 @@ tagRouter.get("/tags/:name", async (req, res) => {
     } catch (err) {
       return res.status(500).send({ message: err.message });
     }
+    const sitemapUrl = await Sitemap.findOne({
+      originalID: tag._id,
+      type: "tag",
+    });
+    if (sitemapUrl) {
+      tag = tag.toObject(); // convert mongoose document to plain javascript object
+      tag.sitemapUrl = sitemapUrl.url; // add url property
+    }
 
     res.status(200).send(tag);
   } catch (err) {

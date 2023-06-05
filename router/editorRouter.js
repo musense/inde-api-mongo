@@ -405,6 +405,15 @@ async function getEditor(req, res, next) {
   } catch (err) {
     return res.status(500).send({ message: err.message });
   }
+  const sitemapUrl = await Sitemap.findOne({
+    originalID: editor._id,
+    type: "editor",
+  });
+  if (sitemapUrl) {
+    editor = editor.toObject(); // convert mongoose document to plain javascript object
+    editor.sitemapUrl = sitemapUrl.url; // add url property
+  }
+
   res.editor = editor;
   next();
 }
@@ -627,10 +636,10 @@ editorRouter.get("/editor", parseQuery, async (req, res) => {
     }
 
     let editors = await editorsQuery;
-    editors = editors.map((editor) => ({
-      ...editor.toObject(),
-      status: editor.status,
-    }));
+    // editors = editors.map((editor) => ({
+    //   ...editor.toObject(),
+    //   status: editor.status,
+    // }));
 
     const totalDocs = await Editor.countDocuments(query).exec();
 
