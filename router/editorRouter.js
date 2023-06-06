@@ -131,14 +131,14 @@ async function parseCategories(req, res, next) {
           : JSON.parse(categoryJsonString);
     }
     //分類為空值時因JSON stringtify的關係會被轉成字串null
-    if (categories[0] === null) {
+    if (categories === undefined) {
+      res.categories = undefined;
+      return next();
+    } else if (categories[0] === null) {
       const findUncategorized = await Categories.findOne({
         name: "Uncategorized",
       }).select("_id name");
       res.categories = findUncategorized;
-      return next();
-    } else if (categories === undefined) {
-      res.categories = undefined;
       return next();
     }
 
@@ -404,14 +404,6 @@ async function getEditor(req, res, next) {
     }
   } catch (err) {
     return res.status(500).send({ message: err.message });
-  }
-  const sitemapUrl = await Sitemap.findOne({
-    originalID: editor._id,
-    type: "editor",
-  });
-  if (sitemapUrl) {
-    editor = editor.toObject(); // convert mongoose document to plain javascript object
-    editor.sitemapUrl = sitemapUrl.url; // add url property
   }
 
   res.editor = editor;
@@ -1180,6 +1172,14 @@ editorRouter.get("/editor/relatedArticles/:id", async (req, res) => {
 //使用 _id尋找特定文章
 editorRouter.get("/editor/:id", getEditor, async (req, res, next) => {
   try {
+    const sitemapUrl = await Sitemap.findOne({
+      originalID: res.editor._id,
+      type: "editor",
+    });
+    if (sitemapUrl) {
+      res.editor = res.editor.toObject(); // convert mongoose document to plain javascript object
+      res.editor.sitemapUrl = sitemapUrl.url; // add url property
+    }
     res.status(200).send(res.editor);
   } catch (err) {
     res.status(500).send({ message: err.message });
