@@ -203,8 +203,22 @@ tagRouter.get("/tags", parseQuery, async (req, res) => {
 
   const totalDocs = await Tags.countDocuments(query).exec();
 
+  const updateTagList = await Promise.all(
+    tagList.map(async (tag) => {
+      const sitemapUrl = await Sitemap.findOne({
+        originalID: tag._id,
+        type: "tag",
+      });
+      if (sitemapUrl) {
+        tag = tag.toObject(); // convert mongoose document to plain javascript object
+        tag.sitemapUrl = sitemapUrl.url; // add url property
+      }
+      return tag;
+    })
+  );
+
   const result = {
-    data: tagList,
+    data: updateTagList,
     totalCount: totalDocs,
     totalPages: Math.ceil(totalDocs / limit),
     limit: limit,
