@@ -379,7 +379,7 @@ tagRouter.post(
           targetChangeSorting: targetChangeSorting,
         });
       } catch (e) {
-        res.status(500).send({ message: e.message });
+        res.status(400).send({ message: e.message });
       }
     }
   }
@@ -399,7 +399,7 @@ tagRouter.patch(
       await updateSorting(req, res, "PATCH", req.body.popular, next);
       next();
     } catch (err) {
-      res.status(500).send({ message: err.message });
+      res.status(400).send({ message: err.message });
     }
   },
   async (req, res, next) => {
@@ -447,7 +447,7 @@ tagRouter.patch(
         targetChangeSorting: targetChangeSorting,
       });
     } catch (err) {
-      res.status(500).send({ message: err.message });
+      res.status(400).send({ message: err.message });
     }
   }
 );

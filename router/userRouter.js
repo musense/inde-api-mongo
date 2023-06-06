@@ -72,7 +72,7 @@ userRouter.post("/login", async (req, res) => {
   } catch (err) {
     // 處理錯誤，例如返回一個適當的錯誤響應
     console.error(err);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(400).json({ message: "Internal server error" });
   }
 });
 
@@ -123,7 +123,7 @@ userRouter.post("/register", async (req, res) => {
     });
     res.status(201).json(registerUserSuccess);
   } catch (e) {
-    res.status(500).send({ message: e.message });
+    res.status(400).send({ message: e.message });
   }
 });
 

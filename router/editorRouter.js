@@ -1233,7 +1233,7 @@ editorRouter.patch(
         articleTitle: article.title,
       });
     } catch (err) {
-      res.status(500).json({ message: err.message });
+      res.status(400).json({ message: err.message });
     }
   }
 );
@@ -1257,7 +1257,7 @@ editorRouter.patch(
       });
     } catch (err) {
       // 如果發生錯誤，回傳錯誤訊息
-      res.status(500).json({ message: err.message });
+      res.status(400).json({ message: err.message });
     }
   }
 );
@@ -1295,7 +1295,7 @@ editorRouter.patch(
         .status(200)
         .send({ updateCount: updateCount, failedCount: failedCount });
     } catch (err) {
-      res.status(500).send({ message: err.message });
+      res.status(400).send({ message: err.message });
     }
   }
 );
@@ -1333,7 +1333,7 @@ editorRouter.patch(
         .status(200)
         .send({ updateCount: updateCount, failedCount: failedCount });
     } catch (err) {
-      res.status(500).send({ message: err.message });
+      res.status(400).send({ message: err.message });
     }
   }
 );
@@ -1364,7 +1364,7 @@ editorRouter.patch("/editor/checkSchedule", async (req, res) => {
 
     res.status(200).send({ message: `Update ${updateCount} successfully` });
   } catch (err) {
-    res.status(500).send({ message: err.message });
+    res.status(400).send({ message: err.message });
   }
 });
 
@@ -1437,7 +1437,7 @@ editorRouter.patch(
       await res.editor.save();
       res.status(200).send({ message: "Editor update successfully" });
     } catch (err) {
-      res.status(500).send({ message: err.message });
+      res.status(400).send({ message: err.message });
     }
   }
 );
@@ -1549,7 +1549,7 @@ editorRouter.post(
         // console.log(newEditor);
         res.status(201).json(newEditor);
       } catch (err) {
-        res.status(500).json({ message: err.message });
+        res.status(400).json({ message: err.message });
       }
     }
   }
@@ -1643,7 +1643,7 @@ editorRouter.post(
         },
       });
     } catch (err) {
-      res.status(500).json({ message: err.message });
+      res.status(400).json({ message: err.message });
     }
   }
 );

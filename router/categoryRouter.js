@@ -457,7 +457,7 @@ categoryRouter.post(
 
       res.status(201).json(newCategory);
     } catch (err) {
-      res.status(500).json({ message: err.message });
+      res.status(400).json({ message: err.message });
     }
   }
 );
@@ -526,7 +526,7 @@ categoryRouter.patch(
       }
       res.status(201).json(updateCategory);
     } catch (err) {
-      res.status(500).send({ message: err.message });
+      res.status(400).send({ message: err.message });
     }
   }
 );
