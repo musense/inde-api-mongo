@@ -136,7 +136,7 @@ async function parseCategories(req, res, next) {
       return next();
     } else if (categories[0] === null) {
       const findUncategorized = await Categories.findOne({
-        name: "Uncategorized",
+        name: "uncategorized",
       }).select("_id name");
       res.categories = findUncategorized;
       return next();
@@ -549,7 +549,7 @@ editorRouter.get("/editor", parseQuery, async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     const { pageNumber, limit } = req;
-
+    const { status } = req.query;
     const skip = pageNumber ? (pageNumber - 1) * limit : 0;
 
     const titlesQuery = req.query.title;
@@ -616,34 +616,80 @@ editorRouter.get("/editor", parseQuery, async (req, res) => {
       query.createdAt = { $gte: start, $lt: end };
     }
 
+    switch (status) {
+      case "全部":
+        query.status = { $in: ["草稿", "已排程", "已發布"] };
+        break;
+      case "草稿":
+        query.status = "草稿";
+        break;
+      case "已排程":
+        query.status = "已排程";
+        break;
+      case "隱藏文章":
+        query.status = "隱藏文章";
+        break;
+      case "已發布":
+        query.status = "已發布";
+        break;
+    }
+
     const editorsQuery = Editor.find(query)
       .populate({ path: "categories", select: "name" })
       .populate({ path: "tags", select: "name" })
       .sort({ createdAt: -1 })
-      .select("-content -htmlContent")
-      .lean(false);
+      .select("-content -htmlContent");
 
     if (limit && limit > 0) {
       editorsQuery.skip(skip).limit(limit);
     }
 
     let editors = await editorsQuery;
-    // editors = editors.map((editor) => ({
-    //   ...editor.toObject(),
-    //   status: editor.status,
-    // }));
 
     const totalDocs = await Editor.countDocuments(query).exec();
+
     const updateEditor = await Promise.all(
       editors.map(async (editor) => {
-        const sitemapUrl = await Sitemap.findOne({
+        const tagIds = editor.tags.map((tag) => tag._id);
+
+        const [categorySitemap, tagSitemaps] = await Promise.all([
+          Sitemap.findOne({
+            originalID: editor.categories._id,
+            type: "category",
+          }),
+          Sitemap.find({ originalID: { $in: tagIds }, type: "tag" }),
+        ]);
+
+        const tagSitemapMap = new Map(
+          tagSitemaps.map((sitemap) => [
+            sitemap.originalID.toString(),
+            sitemap.url,
+          ])
+        );
+
+        editor = editor.toObject();
+
+        if (categorySitemap) {
+          editor.categories = {
+            ...editor.categories,
+            sitemapUrl: categorySitemap.url,
+          };
+        }
+
+        editor.tags = editor.tags.map((tag) => ({
+          ...tag,
+          sitemapUrl: tagSitemapMap.get(tag._id.toString()),
+        }));
+
+        const editorSitemap = await Sitemap.findOne({
           originalID: editor._id,
           type: "editor",
         });
-        if (sitemapUrl) {
-          editor = editor.toObject(); // convert mongoose document to plain javascript object
-          editor.sitemapUrl = sitemapUrl.url; // add url property
+
+        if (editorSitemap) {
+          editor.sitemapUrl = editorSitemap.url;
         }
+
         return editor;
       })
     );
@@ -1207,6 +1253,31 @@ editorRouter.get("/editor/:id", getEditor, async (req, res, next) => {
     if (sitemapUrl) {
       res.editor = res.editor.toObject(); // convert mongoose document to plain javascript object
       res.editor.sitemapUrl = sitemapUrl.url; // add url property
+    }
+
+    if (res.editor.categories) {
+      const categoriesSitemap = await Sitemap.findOne({
+        originalID: res.editor.categories._id,
+        type: "category",
+      });
+      if (categoriesSitemap) {
+        res.editor.categories.sitemapUrl = categoriesSitemap.url;
+      }
+    }
+
+    if (res.editor.tags) {
+      res.editor.tags = await Promise.all(
+        res.editor.tags.map(async (tag) => {
+          const tagsSitemap = await Sitemap.findOne({
+            originalID: tag._id,
+            type: "tag",
+          });
+          if (tagsSitemap) {
+            tag = { ...tag, sitemapUrl: tagsSitemap.url };
+          }
+          return tag;
+        })
+      );
     }
     res.status(200).send(res.editor);
   } catch (err) {

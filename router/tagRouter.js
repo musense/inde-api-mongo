@@ -486,6 +486,8 @@ tagRouter.delete("/tags/bunchDeleteByIds", verifyUser, async (req, res) => {
       type: "tag",
     });
 
+    await Editor.updateMany({}, { $pull: { tags: { $in: ids } } });
+
     const deleteTags = await Tags.deleteMany({
       _id: { $in: ids },
     });

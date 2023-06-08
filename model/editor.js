@@ -93,11 +93,48 @@ const editorSchema = mongoose.Schema(
     scheduledAt: {
       type: Date,
     },
+    draft: {
+      type: Boolean,
+      default: false,
+    },
+    status: {
+      type: String,
+      trim: true,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+const checkStatus = function (next) {
+  const now = new Date();
+  if (this.draft) {
+    this.status = "草稿";
+  } else if (
+    !this.draft &&
+    this.hidden &&
+    this.scheduledAt &&
+    this.scheduledAt > now
+  ) {
+    this.status = "已排程";
+  } else if (
+    !this.draft &&
+    this.hidden &&
+    (!this.scheduledAt || this.scheduledAt <= now)
+  ) {
+    this.status = "隱藏文章";
+  } else if (
+    !this.draft &&
+    !this.hidden &&
+    (!this.scheduledAt || this.scheduledAt <= now)
+  ) {
+    this.status = "已發布";
+  }
+  next();
+};
+
+editorSchema.pre("save", checkStatus);
 
 const Editor = mongoose.model("editor", editorSchema);
 
