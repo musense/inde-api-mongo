@@ -1176,7 +1176,22 @@ editorRouter.get("/editor/relatedArticles/:id", async (req, res) => {
     });
 
     const topRelatedArticles = relatedArticles.slice(0, 6);
-    res.status(200).send({ data: topRelatedArticles });
+
+    const updateRelatedArticles = await Promise.all(
+      topRelatedArticles.map(async (editor) => {
+        const sitemapUrl = await Sitemap.findOne({
+          originalID: editor._id,
+          type: "editor",
+        });
+        if (sitemapUrl) {
+          editor = editor.toObject(); // convert mongoose document to plain javascript object
+          editor.sitemapUrl = sitemapUrl.url; // add url property
+        }
+        return editor;
+      })
+    );
+
+    res.status(200).send({ data: updateRelatedArticles });
   } catch (err) {
     res.status(500).send({ message: err.message });
   }

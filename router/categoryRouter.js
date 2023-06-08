@@ -148,8 +148,22 @@ async function getSpecificClassifications(id, limit, pageNumber) {
     categories: id,
   }).exec();
 
+  const updateEditor = await Promise.all(
+    editors.map(async (editor) => {
+      const sitemapUrl = await Sitemap.findOne({
+        originalID: editor._id,
+        type: "editor",
+      });
+      if (sitemapUrl) {
+        editor = editor.toObject(); // convert mongoose document to plain javascript object
+        editor.sitemapUrl = sitemapUrl.url; // add url property
+      }
+      return editor;
+    })
+  );
+
   const result = {
-    data: editors,
+    data: updateEditor,
     totalCount: totalDocs,
     totalPages: limit > 0 ? Math.ceil(totalDocs / limit) : 1,
     limit: limit,

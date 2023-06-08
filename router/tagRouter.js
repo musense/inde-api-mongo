@@ -255,8 +255,22 @@ tagRouter.get("/tags/tagSearch/:name", parseQuery, async (req, res) => {
       tags: tagData._id,
     }).exec();
 
+    const updateEditorsInTag = await Promise.all(
+      editorsInTag.map(async (editor) => {
+        const sitemapUrl = await Sitemap.findOne({
+          originalID: editor._id,
+          type: "editor",
+        });
+        if (sitemapUrl) {
+          editor = editor.toObject(); // convert mongoose document to plain javascript object
+          editor.sitemapUrl = sitemapUrl.url; // add url property
+        }
+        return editor;
+      })
+    );
+
     const result = {
-      data: editorsInTag,
+      data: updateEditorsInTag,
       totalCount: totalDocs,
       totalPages: limit > 0 ? Math.ceil(totalDocs / limit) : 1,
       limit: limit,
