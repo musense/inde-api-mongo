@@ -544,6 +544,21 @@ function copyFileAndGenerateNewUrl(originalUrl) {
   return newUrl;
 }
 
+editorRouter.patch("/updateStatus", async (req, res) => {
+  try {
+    const updateList = await Editor.find();
+    let updateCount = 0;
+
+    for (let editor of updateList) {
+      await editor.save();
+      updateCount++;
+    }
+    res.status(200).send({ message: `Update ${updateCount} successfully` });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+});
+
 //後台編輯文章處顯示用
 editorRouter.get("/editor", parseQuery, async (req, res) => {
   try {
@@ -1305,7 +1320,7 @@ editorRouter.get("/tempEditor/:id", async (req, res, next) => {
 
 editorRouter.get("/domainInfo", async (req, res, next) => {
   try {
-    const result = { domain: domain };
+    const result = { domain: "https://www.zoonobet.com" };
     res.status(200).send({ data: result });
   } catch (err) {
     return res.status(500).send({ message: err.message });
