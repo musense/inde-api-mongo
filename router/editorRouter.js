@@ -134,7 +134,7 @@ async function parseCategories(req, res, next) {
     if (categories === undefined) {
       res.categories = undefined;
       return next();
-    } else if (categories[0] === null) {
+    } else if (categories === null) {
       const findUncategorized = await Categories.findOne({
         name: "uncategorized",
       }).select("_id name");
