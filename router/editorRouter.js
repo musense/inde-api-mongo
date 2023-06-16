@@ -1659,7 +1659,7 @@ editorRouter.post(
           { _id: newEditor.id },
           { $set: { originalUrl: newEditorOriginalUrl } }
         );
-
+        newEditor.sitemapUrl = newEditorSitemap.url;
         // console.log(newEditor);
         res.status(201).json(newEditor);
       } catch (err) {
