@@ -1659,9 +1659,10 @@ editorRouter.post(
           { _id: newEditor.id },
           { $set: { originalUrl: newEditorOriginalUrl } }
         );
-        newEditor.sitemapUrl = newEditorSitemap.url;
-        // console.log(newEditor);
-        res.status(201).json(newEditor);
+        res.status(201).json({
+          ...newEditor._doc, // Spread operator to include all properties of newEditor
+          sitemapUrl: newEditorSitemap.url,
+        });
       } catch (err) {
         res.status(400).json({ message: err.message });
       }
