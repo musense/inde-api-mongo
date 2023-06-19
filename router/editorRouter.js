@@ -296,9 +296,15 @@ function parseHTML(req, res, next) {
       case "bulleted-list":
         return `<ul>${children}</ul>`;
       case "image":
+        const hrefAttribute = node.href
+          ? `href="${escapeHtml(node.href)}"`
+          : "";
+        const titleAttribute = node.href
+          ? escapeHtml(node.href)
+          : escapeHtml(node.alt);
         const srcAttribute = node.url ? `src="${escapeHtml(node.url)}"` : "";
         const altAttribute = node.alt ? `alt="${escapeHtml(node.alt)}"` : "";
-        return `<img ${srcAttribute} ${altAttribute}>${children}</img>`;
+        return `<a ${hrefAttribute} title = ${titleAttribute} rel = "noopener noreferrer" target = "_blank"> <img ${srcAttribute} ${altAttribute}>${children}</img>`;
       case "link":
         return `<a target="_blank" rel="noopener noreferrer" href="${escapeHtml(
           node.url
@@ -495,27 +501,18 @@ async function processImage(file, originalFilename) {
       Date.now() +
       extension;
 
-    if (file.fieldname === "homeImagePath") {
-      fs.writeFileSync(
-        // `C:/Users/user/Desktop/seo-IND-dev/SIT-code/uploadtest/homepage/${newFilename}`,
-        `/home/saved_image/homepage/${newFilename}`,
-        compressedImage2.data
-      );
-      return newFilename;
-    } else {
-      // save compressed image to disk
-      fs.writeFileSync(
-        // `C:/Users/user/Desktop/seo-IND-dev/SIT-code/uploadtest/content/${newFilename}`,
-        `/home/saved_image/content/${newFilename}`,
-        compressedImage.data
-      );
-      fs.writeFileSync(
-        // `C:/Users/user/Desktop/seo-IND-dev/SIT-code/uploadtest/homepage/${newFilename}`,
-        `/home/saved_image/homepage/${newFilename}`,
-        compressedImage2.data
-      );
-      return newFilename;
-    }
+    // save compressed image to disk
+    fs.writeFileSync(
+      // `C:/Users/user/Desktop/seo-IND-dev/SIT-code/uploadtest/content/${newFilename}`,
+      `/home/saved_image/content/${newFilename}`,
+      compressedImage.data
+    );
+    fs.writeFileSync(
+      // `C:/Users/user/Desktop/seo-IND-dev/SIT-code/uploadtest/homepage/${newFilename}`,
+      `/home/saved_image/homepage/${newFilename}`,
+      compressedImage2.data
+    );
+    return newFilename;
   } else {
     return null;
   }
@@ -1583,9 +1580,9 @@ editorRouter.post(
     } = res;
 
     const serialNumber = await getMaxSerialNumber();
-    const contentImagePath =
+    let contentImagePath =
       req.files.contentImagePath && req.files.contentImagePath[0];
-    const homeImagePath = req.files.homeImagePath && req.files.homeImagePath[0];
+    let homeImagePath = req.files.homeImagePath && req.files.homeImagePath[0];
     let message = "";
     if (title === null) {
       message += "title is required\n";
@@ -1600,14 +1597,6 @@ editorRouter.post(
       res.status(400).send({ message });
     } else {
       try {
-        const contentFilename = contentImagePath
-          ? await processImage(contentImagePath, contentImagePath.originalname)
-          : null;
-
-        const homeFilename = homeImagePath
-          ? await processImage(homeImagePath, homeImagePath.originalname)
-          : null;
-
         const editorData = {
           serialNumber: serialNumber + 1,
           title,
@@ -1626,14 +1615,28 @@ editorRouter.post(
           recommendSorting,
         };
 
-        if (homeImagePath) {
-          editorData.homeImagePath = homeFilename;
-          editorData.contentImagePath = contentFilename;
+        if (contentImagePath === undefined && homeImagePath === undefined) {
+          editorData.contentImagePath = null;
+          editorData.homeImagePath = null;
         } else {
-          editorData.homeImagePath = `${LOCAL_DOMAIN}home/saved_image/homepage/${contentFilename}`;
-          editorData.contentImagePath = `${LOCAL_DOMAIN}home/saved_image/content/${contentFilename}`;
-        }
+          const contentFilename = contentImagePath
+            ? await processImage(
+                contentImagePath,
+                contentImagePath.originalname
+              )
+            : null;
 
+          const homeFilename = homeImagePath
+            ? await processImage(homeImagePath, homeImagePath.originalname)
+            : null;
+          if (homeImagePath && homeFilename.startsWith("http")) {
+            editorData.homeImagePath = homeFilename;
+            editorData.contentImagePath = contentFilename;
+          } else {
+            editorData.homeImagePath = `${LOCAL_DOMAIN}images/homepage/${contentFilename}`;
+            editorData.contentImagePath = `${LOCAL_DOMAIN}images/content/${contentFilename}`;
+          }
+        }
         const newEditor = new Editor(editorData);
         await newEditor.save();
 
