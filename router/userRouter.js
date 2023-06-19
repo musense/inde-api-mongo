@@ -9,7 +9,7 @@ const verifyUser = (req, res, next) => {
   if (req.session.isVerified) {
     next();
   } else {
-    return res.status(404).json({ message: "Please login first" });
+    return res.status(440).json({ message: "Please login first" });
   }
 };
 
