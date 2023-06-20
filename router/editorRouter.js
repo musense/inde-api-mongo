@@ -23,6 +23,13 @@ const LOCAL_DOMAIN = process.env.LOCAL_DOMAIN;
 //set session verify
 const verifyUser = (req, res, next) => {
   if (req.session.isVerified) {
+    req.session.touch();
+    res.cookie("sid", req.cookies.sid, {
+      maxAge: 28800000,
+      httpOnly: true,
+      domain: ".zoonobet.com",
+      secure: true,
+    });
     next();
   } else {
     return res.status(440).json({ message: "Please login first" });
@@ -57,6 +64,9 @@ function parseRequestBody(req, res, next) {
     res.recommendSorting =
       recommendSorting !== undefined ? JSON.parse(recommendSorting) : null;
     res.manualUrl = manualUrl !== undefined ? JSON.parse(manualUrl) : null;
+    res.scheduledAt =
+      scheduledAt !== undefined ? new Date(JSON.parse(scheduledAt)) : null;
+    res.draft = isDraft !== undefined ? JSON.parse(isDraft) : false;
   }
   if (req.method === "PATCH") {
     res.headTitle =
@@ -101,6 +111,18 @@ function parseRequestBody(req, res, next) {
         : hidden === null
         ? false
         : JSON.parse(hidden);
+    res.scheduledAt =
+      scheduledAt === undefined
+        ? undefined
+        : scheduledAt === null
+        ? null
+        : new Date(JSON.parse(scheduledAt));
+    res.draft =
+      isDraft === undefined
+        ? undefined
+        : isDraft === false
+        ? false
+        : JSON.parse(isDraft);
   }
   next();
 }
@@ -1501,6 +1523,8 @@ editorRouter.patch(
       manualUrl,
       altText,
       hidden,
+      scheduledAt,
+      isDraft,
     } = res;
 
     const contentImagePath =
@@ -1543,6 +1567,8 @@ editorRouter.patch(
       res.editor.headDescription = headDescription;
     if (altText !== undefined) res.editor.altText = altText;
     if (hidden !== undefined) res.editor.hidden = hidden;
+    if (scheduledAt !== undefined) res.editor.scheduledAt = scheduledAt;
+    if (isDraft !== undefined) res.editor.draft = isDraft;
 
     try {
       await res.editor.save();
@@ -1577,6 +1603,8 @@ editorRouter.post(
       hidden,
       popularSorting,
       recommendSorting,
+      scheduledAt,
+      isDraft,
     } = res;
 
     const serialNumber = await getMaxSerialNumber();
@@ -1613,6 +1641,8 @@ editorRouter.post(
           hidden,
           popularSorting,
           recommendSorting,
+          scheduledAt,
+          Draft: isDraft,
         };
 
         if (contentImagePath === undefined && homeImagePath === undefined) {
