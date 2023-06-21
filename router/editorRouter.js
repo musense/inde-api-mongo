@@ -48,6 +48,8 @@ function parseRequestBody(req, res, next) {
     hidden,
     popularSorting,
     recommendSorting,
+    scheduledAt,
+    draft,
   } = req.body;
   if (req.method === "POST") {
     res.headTitle = headTitle !== undefined ? JSON.parse(headTitle) : null;
@@ -66,7 +68,7 @@ function parseRequestBody(req, res, next) {
     res.manualUrl = manualUrl !== undefined ? JSON.parse(manualUrl) : null;
     res.scheduledAt =
       scheduledAt !== undefined ? new Date(JSON.parse(scheduledAt)) : null;
-    res.draft = isDraft !== undefined ? JSON.parse(isDraft) : false;
+    res.draft = draft !== undefined ? JSON.parse(draft) : false;
   }
   if (req.method === "PATCH") {
     res.headTitle =
@@ -118,11 +120,11 @@ function parseRequestBody(req, res, next) {
         ? null
         : new Date(JSON.parse(scheduledAt));
     res.draft =
-      isDraft === undefined
+      draft === undefined
         ? undefined
-        : isDraft === false
+        : draft === false
         ? false
-        : JSON.parse(isDraft);
+        : JSON.parse(draft);
   }
   next();
 }
@@ -287,28 +289,32 @@ function parseHTML(req, res, next) {
       if (node.bold) {
         string = `<strong>${string}</strong>`;
       }
+      if (node.hide) {
+        string = `<span style="display: none;">${string}</span>`;
+      }
       return string;
     }
 
     const children = node.children.map((n) => serialize(n)).join("");
+    const hideStyle = node.hide ? ' style="display: none;"' : "";
 
     switch (node.type) {
       case "quote":
         return `<blockquote><p>${children}</p></blockquote>`;
       case "paragraph":
-        return `<p>${children}</p>`;
+        return `<p${hideStyle}>${children}</p$>`;
       case "block-quote":
         return `<blockquote>${children}</blockquote>`;
       case "h1":
-        return `<h1 style="text-align: ${
+        return `<h1 ${hideStyle}"text-align: ${
           node.align || "initial"
         };"><strong>${children}</strong></h1>`;
       case "h2":
-        return `<h2 style="text-align: ${
+        return `<h2 ${hideStyle}"text-align: ${
           node.align || "initial"
         };"><strong>${children}</strong></h2>`;
       case "h3":
-        return `<h3 style="text-align: ${
+        return `<h3 ${hideStyle}"text-align: ${
           node.align || "initial"
         };"><strong>${children}</strong></h3>`;
       case "list-item":
@@ -1524,7 +1530,7 @@ editorRouter.patch(
       altText,
       hidden,
       scheduledAt,
-      isDraft,
+      draft,
     } = res;
 
     const contentImagePath =
@@ -1568,7 +1574,7 @@ editorRouter.patch(
     if (altText !== undefined) res.editor.altText = altText;
     if (hidden !== undefined) res.editor.hidden = hidden;
     if (scheduledAt !== undefined) res.editor.scheduledAt = scheduledAt;
-    if (isDraft !== undefined) res.editor.draft = isDraft;
+    if (draft !== undefined) res.editor.draft = draft;
 
     try {
       await res.editor.save();
@@ -1604,7 +1610,7 @@ editorRouter.post(
       popularSorting,
       recommendSorting,
       scheduledAt,
-      isDraft,
+      draft,
     } = res;
 
     const serialNumber = await getMaxSerialNumber();
@@ -1642,7 +1648,7 @@ editorRouter.post(
           popularSorting,
           recommendSorting,
           scheduledAt,
-          Draft: isDraft,
+          draft,
         };
 
         if (contentImagePath === undefined && homeImagePath === undefined) {
