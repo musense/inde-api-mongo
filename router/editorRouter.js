@@ -302,7 +302,7 @@ function parseHTML(req, res, next) {
       case "quote":
         return `<blockquote><p>${children}</p></blockquote>`;
       case "paragraph":
-        return `<p${hideStyle}>${children}</p$>`;
+        return `<p${hideStyle}>${children}</p>`;
       case "block-quote":
         return `<blockquote>${children}</blockquote>`;
       case "h1":
