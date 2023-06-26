@@ -24,12 +24,12 @@ const LOCAL_DOMAIN = process.env.LOCAL_DOMAIN;
 const verifyUser = (req, res, next) => {
   if (req.session.isVerified) {
     req.session.touch();
-    res.cookie("sid", req.cookies.sid, {
-      maxAge: 28800000,
-      httpOnly: true,
-      domain: ".zoonobet.com",
-      secure: true,
-    });
+    // res.cookie("sid", req.cookies.sid, {
+    //   maxAge: 28800000,
+    //   httpOnly: true,
+    //   domain: ".zoonobet.com",
+    //   secure: true,
+    // });
     next();
   } else {
     return res.status(440).json({ message: "Please login first" });
