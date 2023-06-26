@@ -1669,8 +1669,8 @@ editorRouter.post(
             editorData.homeImagePath = homeFilename;
             editorData.contentImagePath = contentFilename;
           } else {
-            editorData.homeImagePath = `${LOCAL_DOMAIN}images/homepage/${contentFilename}`;
-            editorData.contentImagePath = `${LOCAL_DOMAIN}images/content/${contentFilename}`;
+            editorData.homeImagePath = `${LOCAL_DOMAIN}home/saved_image/homepage/${contentFilename}`;
+            editorData.contentImagePath = `${LOCAL_DOMAIN}home/saved_image/content/${contentFilename}`;
           }
         }
         const newEditor = new Editor(editorData);
