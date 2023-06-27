@@ -32,7 +32,11 @@ const ssl = https.createServer(
 );
 
 const corsOptions = {
-  origin: ["https://www.zoonobet.com", "https://bp.zoonobet.com"],
+  origin: [
+    "https://www.zoonobet.com",
+    "https://bp.zoonobet.com",
+    "https://bd.zoonobet.com",
+  ],
   optionsSuccessStatus: 200, //
   credentials: true,
   // methods: ["GET", "POST", "PATCH", "DELETE"],
@@ -68,7 +72,8 @@ app.use(function (req, res, next) {
   res.header(
     "Access-Control-Allow-Origin",
     "https://www.zoonobet.com",
-    "https://bp.dashboard.zoonobet.com"
+    "https://bp.dashboard.zoonobet.com",
+    "https://bd.zoonobet.com"
   );
   res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,PATCH");
   res.header(
