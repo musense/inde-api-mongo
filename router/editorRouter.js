@@ -1477,7 +1477,7 @@ editorRouter.patch(
   }
 );
 
-editorRouter.patch("/editor/checkSchedule", async (req, res) => {
+editorRouter.patch("/editor/checkScheduleEditors", async (req, res) => {
   //取得當前時間區間
   let now = new Date();
   let oneHourAgo = new Date();
