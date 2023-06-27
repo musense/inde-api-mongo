@@ -16,7 +16,8 @@ const job = new CronJob({
       const response = await axios.patch(
         `${LOCAL_DOMAIN}editor/checkScheduleEditors`
       );
-      console.log(response.data);
+      let now = new Date();
+      console.log(`${now}${response.data.message}`);
       // this.stop();
     } catch (error) {
       console.error(error);
