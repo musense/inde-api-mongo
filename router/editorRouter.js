@@ -332,7 +332,7 @@ function parseHTML(req, res, next) {
           : escapeHtml(node.alt);
         const srcAttribute = node.url ? `src="${escapeHtml(node.url)}"` : "";
         const altAttribute = node.alt ? `alt="${escapeHtml(node.alt)}"` : "";
-        return `<a ${hrefAttribute} title = ${titleAttribute} rel = "noopener noreferrer" target = "_blank"> <img ${srcAttribute} ${altAttribute}>${children}</img>`;
+        return `<a ${hrefAttribute} title = ${titleAttribute} rel = "noopener noreferrer" target = "_blank"> <img ${srcAttribute} ${altAttribute}>${children}</img></a>`;
       case "link":
         return `<a target="_blank" rel="noopener noreferrer" href="${escapeHtml(
           node.url
